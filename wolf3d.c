@@ -12,6 +12,8 @@
 
 //#include "wolf3d.h"
 #include "libgraphics.h"
+#include <fcntl.h>
+#include <stdlib.h>
 
 typedef struct	s_vec2f
 {
@@ -29,10 +31,10 @@ typedef struct	s_player
 
 typedef struct	s_2d_scene
 {
-	t_frame		map;
+	t_frame		*map;
 	t_player	*player;
 	t_frame		cur_frame;
-}				t_scene;
+}				t_2d_scene;
 
 void	render(/* scene */)
 {
@@ -66,8 +68,10 @@ int			load_into_list(int fd, t_list **lines, int *max_column_cnt)
 		col_cnt = ft_cntwords(line, ' ');
 		*max_column_cnt =
 				(col_cnt > *max_column_cnt) ? col_cnt : *max_column_cnt;
-		ft_lstadd(lines, ft_lstnew((void *)column_arr,
+        ft_putstr("b4!\n");
+		ft_lstaddend(lines, ft_lstnew((void *)column_arr,
 								   sizeof(char *) * (col_cnt + 1)));
+        ft_putstr("after!\n");
 		ft_memdel((void **)&line);
 		line_cnt++;
 	}
@@ -108,19 +112,39 @@ void		convert_list2array(t_list *lines, int **arr2d,
 	}
 }
 
+/*
+**	allocates and zeros a 2d array of a specified element
+*/
+
+void		**new_2darray(int rows, int columns, size_t element_size)
+{
+    void	**array_2d;
+    int		row;
+
+    if (!(array_2d = ft_memalloc(sizeof(void *) * (rows + 1))))
+        return (NULL);
+    row = 0;
+    while (row < rows)
+    {
+        array_2d[row] = ft_memalloc(element_size * (columns + 1));
+        row++;
+    }
+    return (array_2d);
+}
+
 int draw_pixel(t_frame *frame, int x, int y, int color)
 {
     unsigned int	*image;
     int				pos;
 
     image = (unsigned int *)frame->image;
-    if (place_me.x < 0 || place_me.x >= scene->cur_frame.width
-        || place_me.y < 0 || place_me.y >= scene->cur_frame.height)
+    if (x < 0 || x >= frame->width
+        || y < 0 || y >= frame->height)
     {
         return (1);
     }
-    pos = place_me.x + (place_me.y * frame->line_size / 4);
-    image[pos] = (unsigned int)place_me.color;
+    pos = x + (y * frame->line_size / 4);
+    image[pos] = (unsigned int)color;
     return (0);
 }
 
@@ -135,18 +159,18 @@ void draw_square(t_frame *frame, int x, int y, int size)
         j = 0;
         while (j < size)
         {
-            draw_pixel(frame, pos.x + j, pos.y + i, 0x00FFFFFF);
+            draw_pixel(frame, x + j, y + i, 0x00FFFFFF);
             j++;
         }
         i++;
     }
 }
 
-int **load_map(char *filename)
+int **load_map(char *filename, t_vec2i *row_col)
 {
 	t_list		*lines;
 	int			**array2d;
-	t_vec2i		row_col;
+	//t_vec2i		row_col;
 	int			file;
 
 	if ((file = open(filename, O_RDONLY)) == -1)
@@ -154,43 +178,49 @@ int **load_map(char *filename)
 		ft_putstr("bad file!\n");
 		exit(1);
 	}
-	row_col.y = load_into_list(file, &lines, &row_col.x);
-	array2d = (int **)new_2darray(row_col.y, row_col.x, sizeof(int));
-	convert_list2array(lines, array2d, row_col.y, row_col.x);
+    lines = NULL;
+    ft_putstr("lolz!\n");
+    (*row_col).y = load_into_list(file, &lines, &(*row_col).x);
+    ft_putstr("lolz!\n");
+	array2d = (int **)new_2darray((*row_col).y, (*row_col).x, sizeof(int));
+    ft_putstr("lolz!\n");
+	convert_list2array(lines, array2d, (*row_col).y, (*row_col).x);
+    ft_putstr("lolz!\n");
 
     return(array2d);
 }
 
-t_frame		new_frame(t_renderer renderer, int height, int width)
+t_frame		*new_tframe(t_renderer *renderer, int height, int width)
 {
-    t_frame frame;
+    t_frame *frame;
 
-    ft_bzero(&frame, sizeof(frame));
-    frame.id = mlx_new_image(renderer->mlx, width, height);
-    renderer->scene->cur_frame.image = mlx_get_data_addr(
-            &frame.id,
-            &frame.color_depth,
-            &frame.line_size,
-            &frame.endien);
-    frame.height = height;
-    frame.width = width;
+    if(!(frame = (t_frame *)ft_memalloc(sizeof(t_frame))))
+        return (0);
+    frame->id = mlx_new_image(renderer->mlx, width, height);
+    frame->image = mlx_get_data_addr(
+            frame->id,
+            &frame->color_depth,
+            &frame->line_size,
+            &frame->endien);
+    frame->height = height;
+    frame->width = width;
     return (frame);
 }
 
-t_frame *construct_map(t_renderer renderer, int **array2d, int block_size)
+t_frame *construct_map(t_renderer *renderer, int **array2d, int block_size, t_vec2i *row_col)// only square maps
 {
     t_frame *frame;
     int i;
     int j;
 
     //malloc frame
-    frame = new_frame(renderer, height, width);
+    frame = new_tframe(renderer, renderer->win_y, renderer->win_x);
 
     i = 0;
-    while (i < row_col.y)
+    while (i < row_col->y)
     {
         j = 0;
-        while (j < row_col.x)
+        while (j < row_col->x)
         {
             if (array2d[i][j] == 1)
                 draw_square(frame, j * block_size, i * block_size, block_size);
@@ -198,17 +228,35 @@ t_frame *construct_map(t_renderer renderer, int **array2d, int block_size)
         }
         i++;
     }
+    return (frame);
 }
+
+
 
 int main(int argc, char **argv)
 {
     int			**array2d;
     t_2d_scene  scene2d;
-	t_renderer	wolf3d_renderer;
+	t_renderer	*wolf3d_renderer;
+    t_vec2i     *row_col;
 
-	add_window(&wolf3d_renderer, 1000, 1000, "cyildiri's wolf3d");
-    array2d = load_map(argv[1]);
-    scene2d.map = construct_map(&wolf3d_renderer, array2d, 50);
+    wolf3d_renderer = new_renderer(render_scene);
+    row_col = new_vec2i(0,0);
+
+    ft_putstr("hmmmm!\n");
+	add_window(wolf3d_renderer, 1000, 1000, "cyildiri's wolf3d");
+    ft_putstr("hmmmm!\n");
+    array2d = NULL;
+    ft_putstr("hmmmm!\n");
+    if (argc > 1)
+        array2d = load_map(argv[1], row_col);
+    ft_putstr("hmmmm!\n");
+    scene2d.map = construct_map(wolf3d_renderer, array2d, 35, row_col);
+    ft_putstr("hmmmm!\n");
+    mlx_put_image_to_window(wolf3d_renderer->mlx, wolf3d_renderer->window, scene2d.map->id, 0, 0);
+    ft_putstr("hmmmm!\n");
+    mlx_loop(wolf3d_renderer->mlx);
+    ft_putstr("hmmmm!\n");
 
 
 	// open window
