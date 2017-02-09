@@ -200,6 +200,21 @@ int draw_pixel(t_frame *frame, int x, int y, int color)
     return (0);
 }
 
+int get_pixel(t_frame *frame, int x, int y)
+{
+    unsigned int	*image;
+    int				pos;
+
+    image = (unsigned int *)frame->image;
+    if (x < 0 || x >= frame->width
+        || y < 0 || y >= frame->height)
+    {
+        return (1);
+    }
+    pos = x + (y * frame->line_size / 4);
+    return (image[pos]);
+}
+
 void draw_square(t_frame *frame, int x, int y, int size)
 {
     int i;
@@ -303,17 +318,17 @@ int		key_pressed(int keycode, void *param)
 
     renderer = (t_rc_renderer *)param;
     if (keycode == UP)
-        renderer->scene->player->position.y -= 1;
+        renderer->scene->player->position.y -= 4;
     else if (keycode == DOWN)
-        renderer->scene->player->position.y += 1;
+        renderer->scene->player->position.y += 4;
     else if (keycode == LEFT)
-        renderer->scene->player->position.x -= 1;
+        renderer->scene->player->position.x -= 4;
     else if (keycode == RIGHT)
-        renderer->scene->player->position.x += 1;
+        renderer->scene->player->position.x += 4;
     else if (keycode == A)
-        renderer->scene->player->direction += 3.14/16;
-    else if (keycode == D)
         renderer->scene->player->direction -= 3.14/16;
+    else if (keycode == D)
+        renderer->scene->player->direction += 3.14/16;
     if (keycode == ESC)
         exit(1);
     return (0);
@@ -331,8 +346,10 @@ static void		drawray_xmajor(t_rc_renderer *renderer, t_vec2i start, t_vec2d delt
     dir.y = (delta.y < 0) ? -1 : 1;
     error = -1.0;
     deltaerr = fabs(delta.x / delta.y);
-    while (length < 15)
+    while (1)
     {
+        if (get_pixel(renderer->scene->map, cur.x, cur.y) != 0)
+            break;
         if (cur.y == start.y)
             error += deltaerr;
         mlx_pixel_put(renderer->mlx, renderer->window, cur.x, cur.y, 0x000000FF);
@@ -351,7 +368,6 @@ static void		drawray_ymajor(t_rc_renderer *renderer, t_vec2i start, t_vec2d delt
 {
     double	deltaerr;
     double	error;
-    int     length = 0;
     t_vec2i cur;
     t_vec2i dir;
 
@@ -361,8 +377,10 @@ static void		drawray_ymajor(t_rc_renderer *renderer, t_vec2i start, t_vec2d delt
     error = -1.0;
     deltaerr = fabs(delta.y / delta.x);
     error += deltaerr;
-    while (length < 15)
+    while (1)
     {
+        if (get_pixel(renderer->scene->map, cur.x, cur.y) != 0)
+            break;
         mlx_pixel_put(renderer->mlx, renderer->window, cur.x, cur.y, 0x000000FF);
         error += deltaerr;
         if (error >= 0.0)
@@ -371,7 +389,6 @@ static void		drawray_ymajor(t_rc_renderer *renderer, t_vec2i start, t_vec2d delt
             error -= 1.0;
         }
         cur.x += dir.x;
-        length++;
     }
 }
 void draw_player_ray(t_rc_renderer *renderer)
@@ -414,7 +431,9 @@ int main(int argc, char **argv)
     int			    **array2d;
 	t_rc_renderer	*rc_renderer;
     t_vec2i         *row_col;
+    int block_size;
 
+    block_size = 15;
     if (argc != 2)
     {
         //usage
@@ -426,14 +445,15 @@ int main(int argc, char **argv)
     //initalize ray caster
     rc_renderer = new_rc_renderer(render_map);
 
-    //add window
-    add_rcwindow(rc_renderer, 1000, 1000, "cyildiri's wolf3d");
-
     //load map to a 2d array
     array2d = load_map(argv[1], row_col);
 
+    //add window
+    add_rcwindow(rc_renderer, row_col->x * block_size, row_col->y * block_size, "minimap");
+
+
     //construct an image map that will be used for casting rays
-    rc_renderer->scene->map = construct_map(rc_renderer, array2d, 15, row_col);
+    rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
 
     //free the memory used for the 2d array
     del_intArr(array2d, row_col->y);
