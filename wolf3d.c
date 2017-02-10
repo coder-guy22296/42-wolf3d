@@ -29,8 +29,8 @@ typedef struct	s_vec2d
 typedef struct	s_player
 {
 	t_vec2i		position;
-	float		direction;
-	float		fov;
+    double		direction;
+	double		fov;
 
 }				t_player;
 
@@ -237,6 +237,24 @@ void draw_square(t_frame *frame, int x, int y, int size)
     }
 }
 
+void clear_frame(t_frame *frame)
+{
+    int i;
+    int j;
+
+    i = 0;
+    while (i < frame->height)
+    {
+        j = 0;
+        while (j < frame->width)
+        {
+            draw_pixel(frame, j, i, 0);
+            j++;
+        }
+        i++;
+    }
+}
+
 int **load_map(char *filename, t_vec2i *row_col)
 {
 	t_list		*lines;
@@ -280,7 +298,7 @@ t_frame *construct_map(t_rc_renderer *renderer, int **array2d, int block_size, t
     return (frame);
 }
 
-t_player *new_player(int x, int y, float direction, int fov)
+t_player *new_player(int x, int y, float direction, double fov)
 {
     t_player *player;
 
@@ -499,10 +517,14 @@ void draw_column(t_rc_renderer *renderer, int col_num, int length)
 {
     int i;
 
+    int y_offset;
+
+    y_offset = (renderer->win_y - length) / 2;
+
     i=0;
     while (i < length)
     {
-        draw_pixel(renderer->scene->cur_frame, col_num, i, 0x00FFFFFF);
+        draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
         i++;
     }
 }
@@ -514,31 +536,31 @@ void	render_player_view(t_rc_renderer *renderer)
     float distance;
     int i;
     void *window;
+    double dir_steps;
+    double cur_dir;
 
     window = *((void **)ft_lmapget(renderer->windows, "Player View")->content);
     //printf("%p\n", window);
     //ft_putstr("a\n");
-    renderer->scene->cur_frame->id = mlx_new_image(renderer->mlx, renderer->win_x, renderer->win_y);
     //ft_putstr("b\n");
     i = 0;
     player = renderer->scene->player;
-    if (renderer)
-        ft_putstr("\0");
+    dir_steps = player->fov / renderer->win_x;
+    cur_dir = player->direction - player->fov / 2;
     //
     //	<< loop start
     while (i < renderer->win_x) {
+        cur_dir += player->fov / renderer->win_x;
         //		cast rays (player, map)
-        distance = cast_ray(renderer->scene->map, player->position, player->direction);
+        distance = cast_ray(renderer->scene->map, player->position, cur_dir);
         //ft_putnbr((int) distance);
         //ft_putchar('\n');
         //		calculate slice height
-        slice_height = renderer->win_y / distance * cos(player->direction);
+        slice_height = renderer->win_y / distance * cos(cur_dir);
         //ft_putnbr(slice_height);
         //ft_putchar('\n');
         //		draw slice to frame
-        //mlx_pixel_put(renderer->mlx, window, 50, 50, 0x00FF0000);
-        draw_pixel(renderer->scene->cur_frame, 50, 50, 0x00FF0000);
-        draw_column(renderer, i, slice_height * 2);
+        draw_column(renderer, i, slice_height);
         //	<< loop end
         i++;
     }
@@ -549,7 +571,7 @@ void	render_player_view(t_rc_renderer *renderer)
 
     //ft_putstr("d\n");
     // destroy frame
-    mlx_destroy_image(renderer->mlx, renderer->scene->cur_frame->id);
+    clear_frame(renderer->scene->cur_frame);
 
     //ft_putstr("e\n");
 }
@@ -603,7 +625,7 @@ ft_putstr("test\n");
     del_intArr(array2d, row_col->y);
     ft_putstr("test\n");
     //add a player
-    rc_renderer->scene->player = new_player(50, 50, 0, 60);
+    rc_renderer->scene->player = new_player(50, 50, 0, 1.22173);
 
 
     draw_pixel(rc_renderer->scene->cur_frame, 50, 50, 0x00FF0000);
