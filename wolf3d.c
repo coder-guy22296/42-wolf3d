@@ -430,8 +430,10 @@ static float		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
     deltaerr = fabs(delta.x / delta.y);
     while (1)
     {
-        if (get_pixel(map, cur.x, cur.y) != 0)
+        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
             break;
+        if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
+            draw_pixel(map, cur.x, cur.y, 0x0000FF00);
         if (cur.y == start.y)
             error += deltaerr;
         error += deltaerr;
@@ -461,8 +463,10 @@ static float		castray_ymajor(t_frame *map, t_vec2i start, t_vec2d delta)
     error += deltaerr;
     while (1)
     {
-        if (get_pixel(map, cur.x, cur.y) != 0)
+        if (get_pixel(map, cur.x, cur.y)  == 0x00FFFFFF)
             break;
+        if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
+            draw_pixel(map, cur.x, cur.y, 0x0000FF00);
         error += deltaerr;
         if (error >= 0.0)
         {
@@ -536,16 +540,29 @@ void	render_player_view(t_rc_renderer *renderer)
     float distance;
     int i;
     void *window;
-    double dir_steps;
     double cur_dir;
 
     window = *((void **)ft_lmapget(renderer->windows, "Player View")->content);
     //printf("%p\n", window);
     //ft_putstr("a\n");
     //ft_putstr("b\n");
+    int z;
+    int e;
+    z = 0;
+    while (z < renderer->scene->cur_frame->height)
+    {
+        e = 0;
+        while(e < renderer->scene->cur_frame->width)
+        {
+            if (get_pixel(renderer->scene->map, e, z) == 0x0000FF00)
+                draw_pixel(renderer->scene->map, e, z, 0x00000000);
+            e++;
+        }
+        z++;
+    }
+
     i = 0;
     player = renderer->scene->player;
-    dir_steps = player->fov / renderer->win_x;
     cur_dir = player->direction - player->fov / 2;
     //
     //	<< loop start
@@ -556,7 +573,7 @@ void	render_player_view(t_rc_renderer *renderer)
         //ft_putnbr((int) distance);
         //ft_putchar('\n');
         //		calculate slice height
-        slice_height = renderer->win_y / distance * cos(cur_dir);
+        slice_height = 2 *((float)renderer->win_y / (distance * cos(player->direction - cur_dir)));
         //ft_putnbr(slice_height);
         //ft_putchar('\n');
         //		draw slice to frame
