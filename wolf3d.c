@@ -311,27 +311,7 @@ t_player *new_player(int x, int y, float direction, double fov)
     return (player);
 }
 
-int		key_pressed(int keycode, void *param)
-{
-    t_rc_renderer	*renderer;
 
-    renderer = (t_rc_renderer *)param;
-    if (keycode == UP)
-        renderer->scene->player->position.y -= 4;
-    else if (keycode == DOWN)
-        renderer->scene->player->position.y += 4;
-    else if (keycode == LEFT)
-        renderer->scene->player->position.x -= 4;
-    else if (keycode == RIGHT)
-        renderer->scene->player->position.x += 4;
-    else if (keycode == A)
-        renderer->scene->player->direction -= 3.14/16;
-    else if (keycode == D)
-        renderer->scene->player->direction += 3.14/16;
-    if (keycode == ESC)
-        exit(1);
-    return (0);
-}
 static void		drawray_xmajor(t_rc_renderer *renderer, char *window_name, t_vec2i start, t_vec2d delta)
 {
     double	deltaerr;
@@ -415,11 +395,10 @@ void draw_player_ray(t_rc_renderer *renderer, char *window_name)
 
 }
 
-static float		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
+static double		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
 {
     double	deltaerr;
     double	error;
-    int     length = 0;
     t_vec2i cur;
     t_vec2i dir;
 
@@ -430,8 +409,6 @@ static float		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
     deltaerr = fabs(delta.x / delta.y);
     while (1)
     {
-        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
-            break;
         if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
             draw_pixel(map, cur.x, cur.y, 0x0000FF00);
         if (cur.y == start.y)
@@ -442,13 +419,16 @@ static float		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
             cur.x += dir.x;
             error -= 1.0;
         }
+        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
+            return (((double)cur.x - (double)start.x)/delta.x);
         cur.y += dir.y;
-        length++;
+        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
+            return (((double)cur.y - (double)start.y)/delta.y);
     }
-    return ((cur.y - (float)start.y)/(float)delta.y);
+
 }
 
-static float		castray_ymajor(t_frame *map, t_vec2i start, t_vec2d delta)
+static double		castray_ymajor(t_frame *map, t_vec2i start, t_vec2d delta)
 {
     double	deltaerr;
     double	error;
@@ -461,28 +441,27 @@ static float		castray_ymajor(t_frame *map, t_vec2i start, t_vec2d delta)
     error = -1.0;
     deltaerr = fabs(delta.y / delta.x);
     error += deltaerr;
-    while (1)
-    {
-        if (get_pixel(map, cur.x, cur.y)  == 0x00FFFFFF)
-            break;
-        if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
-            draw_pixel(map, cur.x, cur.y, 0x0000FF00);
+    while (1) {
+        if (get_pixel(map, cur.x, cur.y) != 0x000000FF)
+            draw_pixel(map, cur.x, cur.y, 0x000000FF);
         error += deltaerr;
-        if (error >= 0.0)
-        {
+        if (error >= 0.0) {
             cur.y += dir.y;
             error -= 1.0;
         }
+        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
+            return (((double)cur.y - (double)start.y)/delta.y);
         cur.x += dir.x;
+        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
+            return (((double)cur.x - (double)start.x)/delta.x);
     }
-    return ((cur.x - (float)start.x)/(float)delta.x);
 }
 
-float cast_ray(t_frame *map, t_vec2i position, double direction)
+double cast_ray(t_frame *map, t_vec2i position, double direction)
 {
     t_vec2i start;
     t_vec2d delta;
-    float distance;
+    double distance;
 
     start.x = position.x;
     start.y = position.y;
@@ -532,12 +511,29 @@ void draw_column(t_rc_renderer *renderer, int col_num, int length)
         i++;
     }
 }
+void graph(t_rc_renderer *renderer, int col_num, double length)
+{
+    int i;
+
+    int y_offset;
+
+    length *= 10;
+
+    y_offset = (renderer->win_y - length);
+
+    i=0;
+    while (i < length)
+    {
+        draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
+        i++;
+    }
+}
 
 void	render_player_view(t_rc_renderer *renderer)
 {
     t_player *player;
-    int slice_height;
-    float distance;
+    double slice_height;
+    double distance;
     int i;
     void *window;
     double cur_dir;
@@ -554,7 +550,7 @@ void	render_player_view(t_rc_renderer *renderer)
         e = 0;
         while(e < renderer->scene->cur_frame->width)
         {
-            if (get_pixel(renderer->scene->map, e, z) == 0x0000FF00)
+            if (get_pixel(renderer->scene->map, e, z) == 0x0000FF00 || get_pixel(renderer->scene->map, e, z) == 0x000000FF)
                 draw_pixel(renderer->scene->map, e, z, 0x00000000);
             e++;
         }
@@ -563,24 +559,27 @@ void	render_player_view(t_rc_renderer *renderer)
 
     i = 0;
     player = renderer->scene->player;
-    cur_dir = player->direction - player->fov / 2;
+    cur_dir = player->direction - (player->fov / 2.0f);
     //
     //	<< loop start
+    printf("=============================================================================\n");
     while (i < renderer->win_x) {
-        cur_dir += player->fov / renderer->win_x;
+        cur_dir += player->fov / (double)renderer->win_x;
         //		cast rays (player, map)
         distance = cast_ray(renderer->scene->map, player->position, cur_dir);
-        //ft_putnbr((int) distance);
-        //ft_putchar('\n');
+        printf("ray: %d \tlenght: %f\n", i, distance);
         //		calculate slice height
-        slice_height = 2 *((float)renderer->win_y / (distance * cos(player->direction - cur_dir)));
+        slice_height = 2.0 *((double)renderer->win_y / (distance /* cos(player->direction - cur_dir)*/));
         //ft_putnbr(slice_height);
         //ft_putchar('\n');
         //		draw slice to frame
-        draw_column(renderer, i, slice_height);
+        //draw_column(renderer, i, (int)distance);
+        graph(renderer, i, distance);
+
         //	<< loop end
         i++;
     }
+    printf("=============================================================================\n");
     //ft_putstr("c\n");
     // display frame
 
@@ -606,6 +605,34 @@ int			render_loop(void *param)
     }
     return (0);
 }
+
+int		key_pressed(int keycode, void *param)
+{
+    t_rc_renderer	*renderer;
+
+    renderer = (t_rc_renderer *)param;
+    if (keycode == UP)
+        renderer->scene->player->position.y -= 1;
+    else if (keycode == DOWN)
+        renderer->scene->player->position.y += 1;
+    else if (keycode == LEFT)
+        renderer->scene->player->position.x -= 1;
+    else if (keycode == RIGHT)
+        renderer->scene->player->position.x += 1;
+    else if (keycode == A)
+        renderer->scene->player->direction -= 3.14/16;
+    else if (keycode == D)
+        renderer->scene->player->direction += 3.14/16;
+    else if (keycode == W)
+        renderer->scene->player->fov += 3.14f/16.0f;
+    else if (keycode == S)
+        renderer->scene->player->fov -= 3.14f/16.0f;
+    if (keycode == ESC)
+        exit(1);
+    render_loop(param);
+    return (0);
+}
+
 int main(int argc, char **argv)
 {
     int			    **array2d;
@@ -652,7 +679,7 @@ ft_putstr("test\n");
     mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 2, 0, key_pressed, rc_renderer);
     mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 2, 0, key_pressed, rc_renderer);
     ft_putstr("test\n");
-    mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
+    //mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
     ft_putstr("test\n");
     // run the mlx loop
     mlx_loop(rc_renderer->mlx);
