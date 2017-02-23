@@ -23,13 +23,13 @@ typedef struct	s_vec2f
 }				t_vec2f;
 typedef struct	s_vec2d
 {
-    double  	x;
-    double		y;
+	double  	x;
+	double		y;
 }				t_vec2d;
 typedef struct	s_player
 {
 	t_vec2i		position;
-    double		direction;
+	double		direction;
 	double		fov;
 
 }				t_player;
@@ -43,49 +43,49 @@ typedef struct	s_rc_scene
 
 typedef struct	s_rc_renderer
 {
-    void		*mlx;
-    t_lmap      *windows;
-    int			win_x;
-    int			win_y;
-    t_rc_scene	*scene;
+	void		*mlx;
+	t_lmap      *windows;
+	int			win_x;
+	int			win_y;
+	t_rc_scene	*scene;
 
 }				t_rc_renderer;
 
 t_rc_renderer	*new_rc_renderer()
 {
-    t_rc_renderer	*rc_renderer;
+	t_rc_renderer	*rc_renderer;
 
-    if (!(rc_renderer = (t_rc_renderer *)ft_memalloc(sizeof(t_rc_renderer))))
-        return (NULL);
-    rc_renderer->mlx = mlx_init();
-    if (!(rc_renderer->scene = (t_rc_scene *)ft_memalloc(sizeof(t_rc_scene))))
-        return (0);
-    return (rc_renderer);
+	if (!(rc_renderer = (t_rc_renderer *)ft_memalloc(sizeof(t_rc_renderer))))
+		return (NULL);
+	rc_renderer->mlx = mlx_init();
+	if (!(rc_renderer->scene = (t_rc_scene *)ft_memalloc(sizeof(t_rc_scene))))
+		return (0);
+	return (rc_renderer);
 }
 
 void	add_rcwindow(t_rc_renderer *renderer, int width, int height, char *title)
 {
-    t_lmap *to_add;
-    void    *new_window;
+	t_lmap *to_add;
+	void    *new_window;
 
-    new_window = mlx_new_window(renderer->mlx, width, height, title);
-    to_add = ft_lmapnew(title, sizeof(title), &new_window, sizeof(new_window));
-    //printf("%p\n", new_window);
-    ft_lmapadd(&renderer->windows, to_add);
-    renderer->win_x = width;
-    renderer->win_y = height;
+	new_window = mlx_new_window(renderer->mlx, width, height, title);
+	to_add = ft_lmapnew(title, sizeof(title), &new_window, sizeof(new_window));
+	//printf("%p\n", new_window);
+	ft_lmapadd(&renderer->windows, to_add);
+	renderer->win_x = width;
+	renderer->win_y = height;
 }
 
 void del_intArr(int **arr, int rows)
 {
-    int i;
+	int i;
 
-    i = 0;
-    while (i < rows)
-    {
-        ft_memdel((void *)&(arr[i]));
-        i++;
-    }
+	i = 0;
+	while (i < rows)
+	{
+		ft_memdel((void *)&(arr[i]));
+		i++;
+	}
 }
 
 
@@ -157,102 +157,102 @@ void		convert_list2array(t_list *lines, int **arr2d,
 
 void		**new_2darray(int rows, int columns, size_t element_size)
 {
-    void	**array_2d;
-    int		row;
+	void	**array_2d;
+	int		row;
 
-    if (!(array_2d = ft_memalloc(sizeof(void *) * (rows + 1))))
-        return (NULL);
-    row = 0;
-    while (row < rows)
-    {
-        array_2d[row] = ft_memalloc(element_size * (columns + 1));
-        row++;
-    }
-    return (array_2d);
+	if (!(array_2d = ft_memalloc(sizeof(void *) * (rows + 1))))
+		return (NULL);
+	row = 0;
+	while (row < rows)
+	{
+		array_2d[row] = ft_memalloc(element_size * (columns + 1));
+		row++;
+	}
+	return (array_2d);
 }
 
 t_frame		*new_tframe(t_rc_renderer *renderer, int height, int width)
 {
-    t_frame *frame;
+	t_frame *frame;
 
-    if(!(frame = (t_frame *)ft_memalloc(sizeof(t_frame))))
-        return (0);
-    frame->id = mlx_new_image(renderer->mlx, width, height);
-    frame->image = mlx_get_data_addr(
-            frame->id,
-            &frame->color_depth,
-            &frame->line_size,
-            &frame->endien);
-    frame->height = height;
-    frame->width = width;
-    return (frame);
+	if(!(frame = (t_frame *)ft_memalloc(sizeof(t_frame))))
+		return (0);
+	frame->id = mlx_new_image(renderer->mlx, width, height);
+	frame->image = mlx_get_data_addr(
+			frame->id,
+			&frame->color_depth,
+			&frame->line_size,
+			&frame->endien);
+	frame->height = height;
+	frame->width = width;
+	return (frame);
 }
 
 int draw_pixel(t_frame *frame, int x, int y, int color)
 {
-    unsigned int	*image;
-    int				pos;
+	unsigned int	*image;
+	int				pos;
 
-    image = (unsigned int *)frame->image;
-    if (x < 0 || x >= frame->width
-        || y < 0 || y >= frame->height)
-    {
-        return (1);
-    }
-    pos = x + (y * frame->line_size / 4);
-    image[pos] = (unsigned int)color;
-    return (0);
+	image = (unsigned int *)frame->image;
+	if (x < 0 || x >= frame->width
+		|| y < 0 || y >= frame->height)
+	{
+		return (1);
+	}
+	pos = x + (y * frame->line_size / 4);
+	image[pos] = (unsigned int)color;
+	return (0);
 }
 
 int get_pixel(t_frame *frame, int x, int y)
 {
-    unsigned int	*image;
-    int				pos;
+	unsigned int	*image;
+	int				pos;
 
-    image = (unsigned int *)frame->image;
-    if (x < 0 || x >= frame->width
-        || y < 0 || y >= frame->height)
-    {
-        return (1);
-    }
-    pos = x + (y * frame->line_size / 4);
-    return (image[pos]);
+	image = (unsigned int *)frame->image;
+	if (x < 0 || x >= frame->width
+		|| y < 0 || y >= frame->height)
+	{
+		return (1);
+	}
+	pos = x + (y * frame->line_size / 4);
+	return (image[pos]);
 }
 
 void draw_square(t_frame *frame, int x, int y, int size)
 {
-    int i;
-    int j;
+	int i;
+	int j;
 
-    i = 0;
-    while (i < size)
-    {
-        j = 0;
-        while (j < size)
-        {
-            draw_pixel(frame, x + j, y + i, 0x00FFFFFF);
-            j++;
-        }
-        i++;
-    }
+	i = 0;
+	while (i < size)
+	{
+		j = 0;
+		while (j < size)
+		{
+			draw_pixel(frame, x + j, y + i, 0x00FFFFFF);
+			j++;
+		}
+		i++;
+	}
 }
 
 void clear_frame(t_frame *frame)
 {
-    int i;
-    int j;
+	int i;
+	int j;
 
-    i = 0;
-    while (i < frame->height)
-    {
-        j = 0;
-        while (j < frame->width)
-        {
-            draw_pixel(frame, j, i, 0);
-            j++;
-        }
-        i++;
-    }
+	i = 0;
+	while (i < frame->height)
+	{
+		j = 0;
+		while (j < frame->width)
+		{
+			draw_pixel(frame, j, i, 0);
+			j++;
+		}
+		i++;
+	}
 }
 
 int **load_map(char *filename, t_vec2i *row_col)
@@ -266,423 +266,487 @@ int **load_map(char *filename, t_vec2i *row_col)
 		ft_putstr("bad file!\n");
 		exit(1);
 	}
-    lines = NULL;
-    (*row_col).y = load_into_list(file, &lines, &(*row_col).x);
+	lines = NULL;
+	(*row_col).y = load_into_list(file, &lines, &(*row_col).x);
 	array2d = (int **)new_2darray((*row_col).y, (*row_col).x, sizeof(int));
 	convert_list2array(lines, array2d, (*row_col).y, (*row_col).x);
 
-    return(array2d);
+	return(array2d);
 }
 
 
 t_frame *construct_map(t_rc_renderer *renderer, int **array2d, int block_size, t_vec2i *row_col)
 {
-    t_frame *frame;
-    int i;
-    int j;
+	t_frame *frame;
+	int i;
+	int j;
 
-    //malloc frame
-    frame = new_tframe(renderer, renderer->win_y, renderer->win_x);
-    i = 0;
-    while (i < row_col->y)
-    {
-        j = 0;
-        while (j < row_col->x)
-        {
-            if (array2d[i][j] == 1)
-                draw_square(frame, j * block_size, i * block_size, block_size);
-            j++;
-        }
-        i++;
-    }
-    return (frame);
+	//malloc frame
+	frame = new_tframe(renderer, renderer->win_y, renderer->win_x);
+	i = 0;
+	while (i < row_col->y)
+	{
+		j = 0;
+		while (j < row_col->x)
+		{
+			if (array2d[i][j] == 1)
+				draw_square(frame, j * block_size, i * block_size, block_size);
+			j++;
+		}
+		i++;
+	}
+	return (frame);
 }
 
 t_player *new_player(int x, int y, float direction, double fov)
 {
-    t_player *player;
+	t_player *player;
 
-    if (!(player = (t_player *)ft_memalloc(sizeof(t_player))))
-        return (0);
-    player->position.x = x;
-    player->position.y = y;
-    player->direction = direction;
-    player->fov = fov;
-    return (player);
+	if (!(player = (t_player *)ft_memalloc(sizeof(t_player))))
+		return (0);
+	player->position.x = x;
+	player->position.y = y;
+	player->direction = direction;
+	player->fov = fov;
+	return (player);
 }
 
 
 static void		drawray_xmajor(t_rc_renderer *renderer, char *window_name, t_vec2i start, t_vec2d delta)
 {
-    double	deltaerr;
-    double	error;
-    int     length = 0;
-    t_vec2i cur;
-    t_vec2i dir;
-    void *window;
+	double	deltaerr;
+	double	error;
+	int     length = 0;
+	t_vec2i cur;
+	t_vec2i dir;
+	void *window;
 
-    cur = start;
-    window = *((void **)ft_lmapget(renderer->windows, window_name)->content);
-    dir.x = (delta.x < 0) ? -1 : 1;
-    dir.y = (delta.y < 0) ? -1 : 1;
-    error = -1.0;
-    deltaerr = fabs(delta.x / delta.y);
-    while (1)
-    {
-        if (get_pixel(renderer->scene->map, cur.x, cur.y) != 0)
-            break;
-        if (cur.y == start.y)
-            error += deltaerr;
-        mlx_pixel_put(renderer->mlx, window, cur.x, cur.y, 0x000000FF);
-        error += deltaerr;
-        if (error >= 0.0)
-        {
-            cur.x += dir.x;
-            error -= 1.0;
-        }
-        cur.y += dir.y;
-        length++;
-    }
+	cur = start;
+	window = *((void **)ft_lmapget(renderer->windows, window_name)->content);
+	dir.x = (delta.x < 0) ? -1 : 1;
+	dir.y = (delta.y < 0) ? -1 : 1;
+	error = -1.0;
+	deltaerr = fabs(delta.x / delta.y);
+	while (1)
+	{
+		if (get_pixel(renderer->scene->map, cur.x, cur.y) != 0)
+			break;
+		if (cur.y == start.y)
+			error += deltaerr;
+		mlx_pixel_put(renderer->mlx, window, cur.x, cur.y, 0x000000FF);
+		error += deltaerr;
+		if (error >= 0.0)
+		{
+			cur.x += dir.x;
+			error -= 1.0;
+		}
+		cur.y += dir.y;
+		length++;
+	}
 }
 
 static void		drawray_ymajor(t_rc_renderer *renderer, char *window_name, t_vec2i start, t_vec2d delta)
 {
-    double	deltaerr;
-    double	error;
-    t_vec2i cur;
-    t_vec2i dir;
-    void *window;
+	double	deltaerr;
+	double	error;
+	t_vec2i cur;
+	t_vec2i dir;
+	void *window;
 
-    cur = start;
-    window = *((void **)ft_lmapget(renderer->windows, window_name)->content);
-    dir.x = (delta.x < 0) ? -1 : 1;
-    dir.y = (delta.y < 0) ? -1 : 1;
-    error = -1.0;
-    deltaerr = fabs(delta.y / delta.x);
-    error += deltaerr;
-    while (1)
-    {
-        if (get_pixel(renderer->scene->map, cur.x, cur.y) != 0)
-            break;
-        mlx_pixel_put(renderer->mlx, window, cur.x, cur.y, 0x000000FF);
-        error += deltaerr;
-        if (error >= 0.0)
-        {
-            cur.y += dir.y;
-            error -= 1.0;
-        }
-        cur.x += dir.x;
-    }
+	cur = start;
+	window = *((void **)ft_lmapget(renderer->windows, window_name)->content);
+	dir.x = (delta.x < 0) ? -1 : 1;
+	dir.y = (delta.y < 0) ? -1 : 1;
+	error = -1.0;
+	deltaerr = fabs(delta.y / delta.x);
+	error += deltaerr;
+	while (1)
+	{
+		if (get_pixel(renderer->scene->map, cur.x, cur.y) != 0)
+			break;
+		mlx_pixel_put(renderer->mlx, window, cur.x, cur.y, 0x000000FF);
+		error += deltaerr;
+		if (error >= 0.0)
+		{
+			cur.y += dir.y;
+			error -= 1.0;
+		}
+		cur.x += dir.x;
+	}
 }
 void draw_player_ray(t_rc_renderer *renderer, char *window_name)
 {
-    t_vec2i start;
-    t_player *player;
-    t_vec2d delta;
+	t_vec2i start;
+	t_player *player;
+	t_vec2d delta;
 
 
-    player = renderer->scene->player;
-    start.x = player->position.x;
-    start.y = player->position.y;
-    delta.x = cos(player->direction);
-    delta.y = sin(player->direction);
+	player = renderer->scene->player;
+	start.x = player->position.x;
+	start.y = player->position.y;
+	delta.x = cos(player->direction);
+	delta.y = sin(player->direction);
 
-    if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
-        drawray_xmajor(renderer, window_name, start, delta);
-    else if (fabs(delta.y / delta.x) <= 1.0)
-        drawray_ymajor(renderer, window_name, start, delta);
+	if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
+		drawray_xmajor(renderer, window_name, start, delta);
+	else if (fabs(delta.y / delta.x) <= 1.0)
+		drawray_ymajor(renderer, window_name, start, delta);
 
 
 }
 
 static double		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
 {
-    double	deltaerr;
-    double	error;
-    t_vec2i cur;
-    t_vec2i dir;
+	double	deltaerr;
+	double	error;
+	t_vec2i cur;
+	t_vec2i dir;
 
-    cur = start;
-    dir.x = (delta.x < 0) ? -1 : 1;
-    dir.y = (delta.y < 0) ? -1 : 1;
-    error = -1.0;
-    deltaerr = fabs(delta.x / delta.y);
-    while (1)
-    {
-        if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
-            draw_pixel(map, cur.x, cur.y, 0x0000FF00);
-        if (cur.y == start.y)
-            error += deltaerr;
-        error += deltaerr;
-        if (error >= 0.0)
-        {
-            cur.x += dir.x;
-            error -= 1.0;
-        }
-        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
-            return (((double)cur.x - (double)start.x)/delta.x);
-        cur.y += dir.y;
-        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
-            return (((double)cur.y - (double)start.y)/delta.y);
-    }
-
+	cur = start;
+	dir.x = (delta.x < 0) ? -1 : 1;
+	dir.y = (delta.y < 0) ? -1 : 1;
+	error = -1.0;
+	deltaerr = fabs(delta.x / delta.y);
+	while (1)
+	{
+		//if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
+		//    break;
+		if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
+			draw_pixel(map, cur.x, cur.y, 0x0000FF00);
+		if (cur.y == start.y)
+			error += deltaerr;
+		error += deltaerr;
+		if (error >= 0.0)
+		{
+			cur.x += dir.x;
+			error -= 1.0;
+		}
+		/*if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
+		{
+			printf("ax\n");
+			return (((double)cur.x - (double)start.x)/delta.x);
+		}*/
+		cur.y += dir.y;
+		if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
+			printf("bx\n");
+			return (((double) cur.y - (double) start.y) / delta.y);
+		}
+	}
+	printf("impact: (%d,%d)\n", cur.x, cur.y);
+	//return (((double)cur.y - (double)start.y)/delta.y);
 }
 
 static double		castray_ymajor(t_frame *map, t_vec2i start, t_vec2d delta)
 {
-    double	deltaerr;
-    double	error;
-    t_vec2i cur;
-    t_vec2i dir;
+	double	deltaerr;
+	double	error;
+	t_vec2i cur;
+	t_vec2i dir;
 
-    cur = start;
-    dir.x = (delta.x < 0) ? -1 : 1;
-    dir.y = (delta.y < 0) ? -1 : 1;
-    error = -1.0;
-    deltaerr = fabs(delta.y / delta.x);
-    error += deltaerr;
-    while (1) {
-        if (get_pixel(map, cur.x, cur.y) != 0x000000FF)
-            draw_pixel(map, cur.x, cur.y, 0x000000FF);
-        error += deltaerr;
-        if (error >= 0.0) {
-            cur.y += dir.y;
-            error -= 1.0;
-        }
-        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
-            return (((double)cur.y - (double)start.y)/delta.y);
-        cur.x += dir.x;
-        if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
-            return (((double)cur.x - (double)start.x)/delta.x);
-    }
+	cur = start;
+	dir.x = (delta.x < 0) ? -1 : 1;
+	dir.y = (delta.y < 0) ? -1 : 1;
+	error = -1.0;
+	deltaerr = fabs(delta.y / delta.x);
+	error += deltaerr;
+	while (1)
+	{
+		//if (get_pixel(map, cur.x, cur.y)  == 0x00FFFFFF)
+		//    break;
+		if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
+			draw_pixel(map, cur.x, cur.y, 0x000000FF);
+		error += deltaerr;
+		if (error >= 0.0)
+		{
+			cur.y += dir.y;
+			error -= 1.0;
+		}
+		/*if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
+
+			printf("by\n");
+			return (((double) cur.y - (double) start.y) / delta.y);
+		}*/
+		cur.x += dir.x;
+		if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
+
+			printf("ay\n");
+			return (((double) cur.x - (double) start.x) / delta.x);
+		}
+	}
+	printf("impact: (%d,%d)\n", cur.x, cur.y);
+	//return (((double)cur.x - (double)start.x)/delta.x);
 }
+
+typedef struct  s_ray
+{
+	int         xdir;
+	int         ydir;
+	double		direction;
+	double		x_step;
+	double		y_step;
+	t_vec2d		position;
+	t_vec2d 	cur;
+
+}               t_ray;
+
+char is_hit(t_frame *map, t_ray *ray)
+{
+	return (1);
+	return (0);
+}
+
+double nearest_vertical_hit()
+{
+
+}
+
+double nearest_horizontal_hit(t_frame *map, t_ray *ray)
+{
+	t_vec2d cur;
+	int hit;
+	double block_size = 16;
+
+	hit = 0;
+	ray->cur = ray->position;
+	//find first wall (hardcoded for a block size/resolution of 16)
+	ray->cur.y += block_size / 2.0f * ray->ydir;
+	ray->cur.x += (block_size / (2.0f * tan(ray->direction))) * ray->xdir;
+
+	while (!is_hit(map, ray))
+	{
+
+
+	}
+}
+
 
 double cast_ray(t_frame *map, t_vec2i position, double direction)
 {
-    t_vec2i start;
-    t_vec2d delta;
-    double distance;
+	t_vec2i start;
+	t_vec2d delta;
+	double distance;
 
-    start.x = position.x;
-    start.y = position.y;
-    delta.x = cos(direction);
-    delta.y = sin(direction);
-    distance = 0.0;
+	start.x = position.x;
+	start.y = position.y;
+	delta.x = cos(direction);
+	delta.y = sin(direction);
+	distance = 0.0;
 
-    if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
-        distance = castray_xmajor(map, start, delta);
-    else if (fabs(delta.y / delta.x) <= 1.0)
-        distance = castray_ymajor(map, start, delta);
+	if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
+		distance = castray_xmajor(map, start, delta);
+	else if (fabs(delta.y / delta.x) <= 1.0)
+		distance = castray_ymajor(map, start, delta);
 
-    return (distance);
+	return (distance);
 }
 
 void	render_minimap( t_rc_renderer *renderer)
 {
-    void *window;
+	void *window;
 
-    window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
+	window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
 
-    //exit (1);
-    mlx_clear_window(renderer->mlx, window);
+	//exit (1);
+	mlx_clear_window(renderer->mlx, window);
 
-    //display map image for testing purposes
-    mlx_put_image_to_window(renderer->mlx, window, renderer->scene->map->id, 0, 0);
+	//display map image for testing purposes
+	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->map->id, 0, 0);
 
-    draw_player_ray(renderer, "minimap");
+	draw_player_ray(renderer, "minimap");
 
-    mlx_pixel_put(renderer->mlx, window, renderer->scene->player->position.x,
-                  renderer->scene->player->position.y,
-                  0x00FF0000);
+	mlx_pixel_put(renderer->mlx, window, renderer->scene->player->position.x,
+				  renderer->scene->player->position.y,
+				  0x00FF0000);
 }
 
 void draw_column(t_rc_renderer *renderer, int col_num, int length)
 {
-    int i;
+	int i;
 
-    int y_offset;
+	int y_offset;
 
-    y_offset = (renderer->win_y - length) / 2;
+	y_offset = (renderer->win_y - length) / 2;
 
-    i=0;
-    while (i < length)
-    {
-        draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
-        i++;
-    }
+	i=0;
+	while (i < length)
+	{
+		draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
+		i++;
+	}
 }
 void graph(t_rc_renderer *renderer, int col_num, double length)
 {
-    int i;
+	int i;
 
-    int y_offset;
+	int y_offset;
 
-    length *= 10;
+	length *= 10;
 
-    y_offset = (renderer->win_y - length);
+	y_offset = (renderer->win_y - length);
 
-    i=0;
-    while (i < length)
-    {
-        draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
-        i++;
-    }
+	i=0;
+	while (i < length)
+	{
+		draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
+		i++;
+	}
 }
 
 void	render_player_view(t_rc_renderer *renderer)
 {
-    t_player *player;
-    double slice_height;
-    double distance;
-    int i;
-    void *window;
-    double cur_dir;
+	t_player *player;
+	double slice_height;
+	double distance;
+	int i;
+	void *window;
+	double cur_dir;
 
-    window = *((void **)ft_lmapget(renderer->windows, "Player View")->content);
-    //printf("%p\n", window);
-    //ft_putstr("a\n");
-    //ft_putstr("b\n");
-    int z;
-    int e;
-    z = 0;
-    while (z < renderer->scene->cur_frame->height)
-    {
-        e = 0;
-        while(e < renderer->scene->cur_frame->width)
-        {
-            if (get_pixel(renderer->scene->map, e, z) == 0x0000FF00 || get_pixel(renderer->scene->map, e, z) == 0x000000FF)
-                draw_pixel(renderer->scene->map, e, z, 0x00000000);
-            e++;
-        }
-        z++;
-    }
+	window = *((void **)ft_lmapget(renderer->windows, "Player View")->content);
+	//printf("%p\n", window);
+	//ft_putstr("a\n");
+	//ft_putstr("b\n");
+	int z;
+	int e;
+	z = 0;
+	while (z < renderer->scene->cur_frame->height)
+	{
+		e = 0;
+		while(e < renderer->scene->cur_frame->width)
+		{
+			if (get_pixel(renderer->scene->map, e, z) == 0x0000FF00
+				|| get_pixel(renderer->scene->map, e, z) == 0x000000FF)
+				draw_pixel(renderer->scene->map, e, z, 0x00000000);
+			e++;
+		}
+		z++;
+	}
 
-    i = 0;
-    player = renderer->scene->player;
-    cur_dir = player->direction - (player->fov / 2.0f);
-    //
-    //	<< loop start
-    printf("=============================================================================\n");
-    while (i < renderer->win_x) {
-        cur_dir += player->fov / (double)renderer->win_x;
-        //		cast rays (player, map)
-        distance = cast_ray(renderer->scene->map, player->position, cur_dir);
-        printf("ray: %d \tlenght: %f\n", i, distance);
-        //		calculate slice height
-        slice_height = 2.0 *((double)renderer->win_y / (distance /* cos(player->direction - cur_dir)*/));
-        //ft_putnbr(slice_height);
-        //ft_putchar('\n');
-        //		draw slice to frame
-        //draw_column(renderer, i, (int)distance);
-        graph(renderer, i, distance);
+	i = 0;
+	player = renderer->scene->player;
+	cur_dir = player->direction - (player->fov / 2.0f);
+	//
+	//	<< loop start
+	printf("=============================================================================\n");
+	while (i < renderer->win_x) {
+		cur_dir += player->fov / (double)renderer->win_x;
+		//		cast rays (player, map)
+		distance = cast_ray(renderer->scene->map, player->position, cur_dir);
+		printf("ray: %d \tlenght: %f\n", i, distance);
+		//		calculate slice height
+		slice_height = 2.0 *((double)renderer->win_y / (distance /* cos(player->direction - cur_dir)*/));
+		//ft_putnbr(slice_height);
+		//ft_putchar('\n');
+		//		draw slice to frame
+		//draw_column(renderer, i, (int)distance);
+		graph(renderer, i, distance);
 
-        //	<< loop end
-        i++;
-    }
-    printf("=============================================================================\n");
-    //ft_putstr("c\n");
-    // display frame
+		//	<< loop end
+		i++;
+	}
+	printf("=============================================================================\n");
+	//ft_putstr("c\n");
+	// display frame
 
-    mlx_put_image_to_window(renderer->mlx, window, renderer->scene->cur_frame->id, 0, 0);
+	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->cur_frame->id, 0, 0);
 
-    //ft_putstr("d\n");
-    // destroy frame
-    clear_frame(renderer->scene->cur_frame);
+	//ft_putstr("d\n");
+	// destroy frame
+	clear_frame(renderer->scene->cur_frame);
 
-    //ft_putstr("e\n");
+	//ft_putstr("e\n");
 }
 
 int			render_loop(void *param)
 {
-    t_rc_renderer	*renderer;
+	t_rc_renderer	*renderer;
 
-    renderer = (t_rc_renderer *)param;
-    if (renderer->scene)
-    {
+	renderer = (t_rc_renderer *)param;
+	if (renderer->scene)
+	{
 
-        render_player_view(renderer);
-        render_minimap(renderer);
-    }
-    return (0);
+		render_player_view(renderer);
+		render_minimap(renderer);
+	}
+	return (0);
 }
 
 int		key_pressed(int keycode, void *param)
 {
-    t_rc_renderer	*renderer;
+	t_rc_renderer	*renderer;
 
-    renderer = (t_rc_renderer *)param;
-    if (keycode == UP)
-        renderer->scene->player->position.y -= 1;
-    else if (keycode == DOWN)
-        renderer->scene->player->position.y += 1;
-    else if (keycode == LEFT)
-        renderer->scene->player->position.x -= 1;
-    else if (keycode == RIGHT)
-        renderer->scene->player->position.x += 1;
-    else if (keycode == A)
-        renderer->scene->player->direction -= 3.14/16;
-    else if (keycode == D)
-        renderer->scene->player->direction += 3.14/16;
-    else if (keycode == W)
-        renderer->scene->player->fov += 3.14f/16.0f;
-    else if (keycode == S)
-        renderer->scene->player->fov -= 3.14f/16.0f;
-    if (keycode == ESC)
-        exit(1);
-    render_loop(param);
-    return (0);
+	renderer = (t_rc_renderer *)param;
+	if (keycode == UP)
+		renderer->scene->player->position.y -= 1;
+	else if (keycode == DOWN)
+		renderer->scene->player->position.y += 1;
+	else if (keycode == LEFT)
+		renderer->scene->player->position.x -= 1;
+	else if (keycode == RIGHT)
+		renderer->scene->player->position.x += 1;
+	else if (keycode == A)
+		renderer->scene->player->direction -= 3.14/16;
+	else if (keycode == D)
+		renderer->scene->player->direction += 3.14/16;
+	else if (keycode == W)
+		renderer->scene->player->fov += 3.14f/16.0f;
+	else if (keycode == S)
+		renderer->scene->player->fov -= 3.14f/16.0f;
+	if (keycode == ESC)
+		exit(1);
+	render_loop(param);
+	return (0);
 }
 
 int main(int argc, char **argv)
 {
-    int			    **array2d;
+	int			    **array2d;
 	t_rc_renderer	*rc_renderer;
-    t_vec2i         *row_col;
-    int block_size;
+	t_vec2i         *row_col;
+	int block_size;
 
-    block_size = 15;
-    if (argc != 2)
-    {
-        //usage
-        return (0);
-    }
-    array2d = NULL;
-    row_col = new_vec2i(0,0);
+	block_size = 16;
+	if (argc != 2)
+	{
+		//usage
+		return (0);
+	}
+	array2d = NULL;
+	row_col = new_vec2i(0,0);
 ft_putstr("test\n");
-    //initalize ray caster
-    rc_renderer = new_rc_renderer();
-    //load map to a 2d array
-    array2d = load_map(argv[1], row_col);
-    ft_putstr("test\n");
-    //add window
-    add_rcwindow(rc_renderer, row_col->x * block_size, row_col->y * block_size, ft_strdup("minimap"));
-    add_rcwindow(rc_renderer, 1000, 1000, ft_strdup("Player View"));
-    ft_putstr("test\n");
+	//initalize ray caster
+	rc_renderer = new_rc_renderer();
+	//load map to a 2d array
+	array2d = load_map(argv[1], row_col);
+	ft_putstr("test\n");
+	//add window
+	add_rcwindow(rc_renderer, row_col->x * block_size, row_col->y * block_size, ft_strdup("minimap"));
+	add_rcwindow(rc_renderer, 1000, 1000, ft_strdup("Player View"));
+	ft_putstr("test\n");
 
-    //construct an image map that will be used for casting rays
-    rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
+	//construct an image map that will be used for casting rays
+	rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
 
-    rc_renderer->scene->cur_frame = new_tframe(rc_renderer, rc_renderer->win_x, rc_renderer->win_y);
+	rc_renderer->scene->cur_frame = new_tframe(rc_renderer, rc_renderer->win_x, rc_renderer->win_y);
 
-    ft_putstr("test\n");
-    //free the memory used for the 2d array
-    del_intArr(array2d, row_col->y);
-    ft_putstr("test\n");
-    //add a player
-    rc_renderer->scene->player = new_player(50, 50, 0, 1.22173);
-
-
-    draw_pixel(rc_renderer->scene->cur_frame, 50, 50, 0x00FF0000);
+	ft_putstr("test\n");
+	//free the memory used for the 2d array
+	del_intArr(array2d, row_col->y);
+	ft_putstr("test\n");
+	//add a player
+	rc_renderer->scene->player = new_player(50, 50, 0, 1.22173);
 
 
-    ft_putstr("test\n");
-    mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 2, 0, key_pressed, rc_renderer);
-    mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 2, 0, key_pressed, rc_renderer);
-    ft_putstr("test\n");
-    //mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
-    ft_putstr("test\n");
-    // run the mlx loop
-    mlx_loop(rc_renderer->mlx);
+	draw_pixel(rc_renderer->scene->cur_frame, 50, 50, 0x00FF0000);
+
+
+	ft_putstr("test\n");
+	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 2, 0, key_pressed, rc_renderer);
+	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 2, 0, key_pressed, rc_renderer);
+	ft_putstr("test\n");
+	//mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
+	ft_putstr("test\n");
+	// run the mlx loop
+	mlx_loop(rc_renderer->mlx);
 
 	//clean up
 
