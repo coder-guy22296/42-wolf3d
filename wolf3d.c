@@ -28,7 +28,7 @@ typedef struct	s_vec2d
 }				t_vec2d;
 typedef struct	s_player
 {
-	t_vec2i		position;
+	t_vec2d		position;
 	double		direction;
 	double		fov;
 
@@ -385,7 +385,7 @@ void draw_player_ray(t_rc_renderer *renderer, char *window_name)
 	start.x = player->position.x;
 	start.y = player->position.y;
 	delta.x = cos(player->direction);
-	delta.y = sin(player->direction);
+	delta.y = sin(player->direction) * -1.0f;
 
 	if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
 		drawray_xmajor(renderer, window_name, start, delta);
@@ -395,149 +395,226 @@ void draw_player_ray(t_rc_renderer *renderer, char *window_name)
 
 }
 
-static double		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
-{
-	double	deltaerr;
-	double	error;
-	t_vec2i cur;
-	t_vec2i dir;
-
-	cur = start;
-	dir.x = (delta.x < 0) ? -1 : 1;
-	dir.y = (delta.y < 0) ? -1 : 1;
-	error = -1.0;
-	deltaerr = fabs(delta.x / delta.y);
-	while (1)
-	{
-		//if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
-		//    break;
-		if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
-			draw_pixel(map, cur.x, cur.y, 0x0000FF00);
-		if (cur.y == start.y)
-			error += deltaerr;
-		error += deltaerr;
-		if (error >= 0.0)
-		{
-			cur.x += dir.x;
-			error -= 1.0;
-		}
-		/*if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
-		{
-			printf("ax\n");
-			return (((double)cur.x - (double)start.x)/delta.x);
-		}*/
-		cur.y += dir.y;
-		if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
-			printf("bx\n");
-			return (((double) cur.y - (double) start.y) / delta.y);
-		}
-	}
-	printf("impact: (%d,%d)\n", cur.x, cur.y);
-	//return (((double)cur.y - (double)start.y)/delta.y);
-}
-
-static double		castray_ymajor(t_frame *map, t_vec2i start, t_vec2d delta)
-{
-	double	deltaerr;
-	double	error;
-	t_vec2i cur;
-	t_vec2i dir;
-
-	cur = start;
-	dir.x = (delta.x < 0) ? -1 : 1;
-	dir.y = (delta.y < 0) ? -1 : 1;
-	error = -1.0;
-	deltaerr = fabs(delta.y / delta.x);
-	error += deltaerr;
-	while (1)
-	{
-		//if (get_pixel(map, cur.x, cur.y)  == 0x00FFFFFF)
-		//    break;
-		if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
-			draw_pixel(map, cur.x, cur.y, 0x000000FF);
-		error += deltaerr;
-		if (error >= 0.0)
-		{
-			cur.y += dir.y;
-			error -= 1.0;
-		}
-		/*if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
-
-			printf("by\n");
-			return (((double) cur.y - (double) start.y) / delta.y);
-		}*/
-		cur.x += dir.x;
-		if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
-
-			printf("ay\n");
-			return (((double) cur.x - (double) start.x) / delta.x);
-		}
-	}
-	printf("impact: (%d,%d)\n", cur.x, cur.y);
-	//return (((double)cur.x - (double)start.x)/delta.x);
-}
+//static double		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
+//{
+//	double	deltaerr;
+//	double	error;
+//	t_vec2i cur;
+//	t_vec2i dir;
+//
+//	cur = start;
+//	dir.x = (delta.x < 0) ? -1 : 1;
+//	dir.y = (delta.y < 0) ? -1 : 1;
+//	error = -1.0;
+//	deltaerr = fabs(delta.x / delta.y);
+//	while (1)
+//	{
+//		//if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
+//		//    break;
+//		if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
+//			draw_pixel(map, cur.x, cur.y, 0x0000FF00);
+//		if (cur.y == start.y)
+//			error += deltaerr;
+//		error += deltaerr;
+//		if (error >= 0.0)
+//		{
+//			cur.x += dir.x;
+//			error -= 1.0;
+//		}
+//		/*if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF)
+//		{
+//			printf("ax\n");
+//			return (((double)cur.x - (double)start.x)/delta.x);
+//		}*/
+//		cur.y += dir.y;
+//		if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
+//			printf("bx\n");
+//			return (((double) cur.y - (double) start.y) / delta.y);
+//		}
+//	}
+//	printf("impact: (%d,%d)\n", cur.x, cur.y);
+//	//return (((double)cur.y - (double)start.y)/delta.y);
+//}
+//
+//static double		castray_ymajor(t_frame *map, t_vec2i start, t_vec2d delta)
+//{
+//	double	deltaerr;
+//	double	error;
+//	t_vec2i cur;
+//	t_vec2i dir;
+//
+//	cur = start;
+//	dir.x = (delta.x < 0) ? -1 : 1;
+//	dir.y = (delta.y < 0) ? -1 : 1;
+//	error = -1.0;
+//	deltaerr = fabs(delta.y / delta.x);
+//	error += deltaerr;
+//	while (1)
+//	{
+//		//if (get_pixel(map, cur.x, cur.y)  == 0x00FFFFFF)
+//		//    break;
+//		if (get_pixel(map, cur.x, cur.y)  != 0x000000FF)
+//			draw_pixel(map, cur.x, cur.y, 0x000000FF);
+//		error += deltaerr;
+//		if (error >= 0.0)
+//		{
+//			cur.y += dir.y;
+//			error -= 1.0;
+//		}
+//		/*if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
+//
+//			printf("by\n");
+//			return (((double) cur.y - (double) start.y) / delta.y);
+//		}*/
+//		cur.x += dir.x;
+//		if (get_pixel(map, cur.x, cur.y) == 0x00FFFFFF) {
+//
+//			printf("ay\n");
+//			return (((double) cur.x - (double) start.x) / delta.x);
+//		}
+//	}
+//	printf("impact: (%d,%d)\n", cur.x, cur.y);
+//	//return (((double)cur.x - (double)start.x)/delta.x);
+//}
 
 typedef struct  s_ray
 {
+	t_vec2d		position;
+	double		direction;
+	t_vec2d 	cur;
 	int         xdir;
 	int         ydir;
-	double		direction;
 	double		x_step;
 	double		y_step;
-	t_vec2d		position;
-	t_vec2d 	cur;
-
 }               t_ray;
 
-char is_hit(t_frame *map, t_ray *ray)
+char hit_wall(t_frame *map, t_ray *ray, char dir)
 {
-	return (1);
-	return (0);
-}
+	t_vec2i check_pos;
 
-double nearest_vertical_hit()
-{
+	check_pos.x = (int)floor((ray->cur.x) / 16.0f);
+	check_pos.y = (int)floor((ray->cur.y) / 16.0f);
 
-}
+	if (dir == 'v' && ray->xdir != 1)
+		check_pos.x--;
+	if (dir == 'h' && ray->ydir != 1)
+		check_pos.y--;
 
-double nearest_horizontal_hit(t_frame *map, t_ray *ray)
-{
-	t_vec2d cur;
-	int hit;
-	double block_size = 16;
-
-	hit = 0;
-	ray->cur = ray->position;
-	//find first wall (hardcoded for a block size/resolution of 16)
-	ray->cur.y += block_size / 2.0f * ray->ydir;
-	ray->cur.x += (block_size / (2.0f * tan(ray->direction))) * ray->xdir;
-
-	while (!is_hit(map, ray))
+	//printf("check_hit(%d,%d) -> %f - %d rad *|", check_pos.x, check_pos.y, ray->direction, get_pixel(map, check_pos.x, check_pos.y));
+	if(get_pixel(map, check_pos.x, check_pos.y) == 0x00FFFFFF || check_pos.x > 1000 || check_pos.y > 1000 || check_pos.x < 0 || check_pos.y < 0)
 	{
-
-
+		//printf("hit\n");
+		return (1);
+	}
+	else
+	{
+		//printf("miss\n");
+		return (0);
 	}
 }
 
-
-double cast_ray(t_frame *map, t_vec2i position, double direction)
+double nearest_vertical_hit(t_frame *map, t_ray *ray, t_rc_renderer *renderer)
 {
-	t_vec2i start;
-	t_vec2d delta;
-	double distance;
+	double block_size = 16.0;
+	void *window;
+	//t_vec2d cur;
 
-	start.x = position.x;
-	start.y = position.y;
-	delta.x = cos(direction);
-	delta.y = sin(direction);
-	distance = 0.0;
+	window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
 
-	if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
-		distance = castray_xmajor(map, start, delta);
-	else if (fabs(delta.y / delta.x) <= 1.0)
-		distance = castray_ymajor(map, start, delta);
+	//printf("first wall: (%f,%f)\n", ray->cur.x, ray->cur.y);
+	//find first wall (hardcoded for a block size/resolution of 16)
+	ray->cur.y += (block_size / 2.0f) * fabs(tan(ray->direction))  * ray->ydir;
+	ray->cur.x += (block_size / 2.0f) * ray->xdir;
 
-	return (distance);
+	//printf("first wall-v: (%f,%f)(%f,%f)\n", ray->cur.x, ray->cur.y, ray->cur.x/16.0, ray->cur.y/16.0);
+	//calculate x step and y step
+	ray->y_step = block_size * fabs(tan(ray->direction)) * ray->ydir;
+	ray->x_step = block_size * ray->xdir;
+	while (!hit_wall(map, ray, 'v'))
+	{
+		ray->cur.y += ray->y_step;
+		ray->cur.x += ray->x_step;
+	}
+	//printf("impact-v: (%f,%f)(%f,%f)\n", ray->cur.x, ray->cur.y, ray->cur.x/16.0, ray->cur.y/16.0);
+	mlx_pixel_put(renderer->mlx, window, (int)ray->cur.x/16, (int)ray->cur.y/16, 0x00FF0000);
+	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
+}
+
+double nearest_horizontal_hit(t_frame *map, t_ray *ray, t_rc_renderer *renderer)
+{
+	double block_size = 16.0;
+	void *window;
+
+	window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
+	if(ray->direction == 0.0)
+		return (2147483647);
+
+	//find first wall (hardcoded for a block size/resolution of 16)
+	ray->cur.y += (block_size / 2.0f) * ray->ydir;
+	ray->cur.x += ((block_size / 2.0f) / fabs(tan(ray->direction))) * ray->xdir;
+	//printf("first wall-h: (%f,%f)(%f,%f)\n", ray->cur.x, ray->cur.y, ray->cur.x/16.0, ray->cur.y/16.0);
+	//calculate x step and y step
+	ray->y_step = block_size * ray->ydir;
+	ray->x_step = (block_size / fabs(tan(ray->direction))) * ray->xdir;
+	while (!hit_wall(map, ray, 'h'))
+	{
+		ray->cur.y += ray->y_step;
+		ray->cur.x += ray->x_step;
+	}
+	//printf("impact-h: (%f,%f)(%f,%f)\n", ray->cur.x, ray->cur.y, ray->cur.x/16.0, ray->cur.y/16.0);
+	mlx_pixel_put(renderer->mlx, window, (int)ray->cur.x/16, (int)ray->cur.y/16, 0x0000FF00);
+	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
+}
+
+double cast_ray(t_frame *map, t_vec2d position, double direction, t_rc_renderer *renderer)
+{
+	t_ray ray;
+	double h_hit;
+	double v_hit;
+
+	ray.direction = direction;
+	ray.position.x = (position.x * 16.0f) + 8.0f;
+	ray.position.y = (position.y * 16.0f) + 8.0f;
+	ray.ydir = (sin(direction) > 0) ? -1 : 1;
+	ray.xdir = (cos(direction) > 0) ? 1 : -1;
+	if (sin(direction) == 0)
+		ray.ydir = 0;
+	if (cos(direction) == 0)
+		ray.xdir = 0;
+	ray.cur = ray.position;
+
+	//exit (1);
+
+	h_hit = nearest_horizontal_hit(map, &ray, renderer);
+
+	ray.cur = ray.position;
+	v_hit = nearest_vertical_hit(map, &ray, renderer);
+	//printf("pos(%f,%f)(%f,%f)\n", ray.position.x, ray.position.y, ray.position.x/16.0, ray.position.y/16.0);
+	//printf("length_h: %f \tlenght_v: %f\n", h_hit / 16.0f, v_hit / 16.0f);
+	return ((h_hit < v_hit) ? h_hit / 16.0f : v_hit / 16.0f);
+
+
+
+
+
+	////////////////////////////////////////////////////////////////////////////
+//	t_vec2i start;
+//	t_vec2d delta;
+//	double distance;
+//
+//	start.x = position.x;
+//	start.y = position.y;
+//	delta.x = cos(direction);
+//	delta.y = sin(direction);
+//	distance = 0.0;
+//
+//	if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
+//		distance = castray_xmajor(map, start, delta);
+//	else if (fabs(delta.y / delta.x) <= 1.0)
+//		distance = castray_ymajor(map, start, delta);
+//
+//	return (distance);
+	////////////////////////////////////////////////////////////////////////////
 }
 
 void	render_minimap( t_rc_renderer *renderer)
@@ -547,7 +624,7 @@ void	render_minimap( t_rc_renderer *renderer)
 	window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
 
 	//exit (1);
-	mlx_clear_window(renderer->mlx, window);
+	//mlx_clear_window(renderer->mlx, window);
 
 	//display map image for testing purposes
 	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->map->id, 0, 0);
@@ -613,9 +690,10 @@ void	render_player_view(t_rc_renderer *renderer)
 		e = 0;
 		while(e < renderer->scene->cur_frame->width)
 		{
-			if (get_pixel(renderer->scene->map, e, z) == 0x0000FF00
-				|| get_pixel(renderer->scene->map, e, z) == 0x000000FF)
-				draw_pixel(renderer->scene->map, e, z, 0x00000000);
+			if (z <= renderer->scene->cur_frame->height / 2)
+				draw_pixel(renderer->scene->cur_frame, e, z, 0x00FF5000);
+			else
+				draw_pixel(renderer->scene->cur_frame, e, z, 0x00663300);
 			e++;
 		}
 		z++;
@@ -623,22 +701,26 @@ void	render_player_view(t_rc_renderer *renderer)
 
 	i = 0;
 	player = renderer->scene->player;
-	cur_dir = player->direction - (player->fov / 2.0f);
+	cur_dir = player->direction + (player->fov / 2.0f);
 	//
 	//	<< loop start
 	printf("=============================================================================\n");
 	while (i < renderer->win_x) {
-		cur_dir += player->fov / (double)renderer->win_x;
+		cur_dir -= player->fov / (double)renderer->win_x;
 		//		cast rays (player, map)
-		distance = cast_ray(renderer->scene->map, player->position, cur_dir);
-		printf("ray: %d \tlenght: %f\n", i, distance);
+		distance = cast_ray(renderer->scene->map, player->position, /*player->direction*/cur_dir, renderer);
+		//draw_player_ray(renderer, "minimap");
+		//printf("ray: %d \tangle: %f\tlenght: %f\n", i, player->direction, distance);
 		//		calculate slice height
-		slice_height = 2.0 *((double)renderer->win_y / (distance /* cos(player->direction - cur_dir)*/));
+		//if (cos(player->direction - cur_dir) == 0.0)
+		//	slice_height = ((double)renderer->win_y / (distance));
+		//else
+			slice_height = ((double)renderer->win_y / (distance * cos(player->direction - cur_dir)));
 		//ft_putnbr(slice_height);
 		//ft_putchar('\n');
 		//		draw slice to frame
-		//draw_column(renderer, i, (int)distance);
-		graph(renderer, i, distance);
+		draw_column(renderer, i, (int)slice_height);
+		//graph(renderer, i, distance);
 
 		//	<< loop end
 		i++;
@@ -664,8 +746,8 @@ int			render_loop(void *param)
 	if (renderer->scene)
 	{
 
-		render_player_view(renderer);
 		render_minimap(renderer);
+		render_player_view(renderer);
 	}
 	return (0);
 }
@@ -684,9 +766,9 @@ int		key_pressed(int keycode, void *param)
 	else if (keycode == RIGHT)
 		renderer->scene->player->position.x += 1;
 	else if (keycode == A)
-		renderer->scene->player->direction -= 3.14/16;
-	else if (keycode == D)
 		renderer->scene->player->direction += 3.14/16;
+	else if (keycode == D)
+		renderer->scene->player->direction -= 3.14/16;
 	else if (keycode == W)
 		renderer->scene->player->fov += 3.14f/16.0f;
 	else if (keycode == S)
@@ -733,10 +815,12 @@ ft_putstr("test\n");
 	del_intArr(array2d, row_col->y);
 	ft_putstr("test\n");
 	//add a player
-	rc_renderer->scene->player = new_player(50, 50, 0, 1.22173);
 
 
-	draw_pixel(rc_renderer->scene->cur_frame, 50, 50, 0x00FF0000);
+	rc_renderer->scene->player = new_player(23, 23, 2.355, 1.22173);
+
+
+	//draw_pixel(rc_renderer->scene->cur_frame, 50, 50, 0x00FF0000);
 
 
 	ft_putstr("test\n");
