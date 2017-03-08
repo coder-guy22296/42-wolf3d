@@ -513,13 +513,13 @@ char hit_wall(t_frame *map, t_ray *ray, char dir)
 	}
 }
 
-double nearest_vertical_hit(t_frame *map, t_ray *ray, t_rc_renderer *renderer)
+double nearest_vertical_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *renderer*/)
 {
 	double block_size = 16.0;
-	void *window;
+	//void *window;
 	//t_vec2d cur;
 
-	window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
+	//window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
 
 	//printf("first wall: (%f,%f)\n", ray->cur.x, ray->cur.y);
 	//find first wall (hardcoded for a block size/resolution of 16)
@@ -532,20 +532,20 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray, t_rc_renderer *renderer)
 	ray->x_step = block_size * ray->xdir;
 	while (!hit_wall(map, ray, 'v'))
 	{
+		//mlx_pixel_put(renderer->mlx, window, (int)ray->cur.x/16, (int)ray->cur.y/16, 0x003369E8);
 		ray->cur.y += ray->y_step;
 		ray->cur.x += ray->x_step;
 	}
 	//printf("impact-v: (%f,%f)(%f,%f)\n", ray->cur.x, ray->cur.y, ray->cur.x/16.0, ray->cur.y/16.0);
-	mlx_pixel_put(renderer->mlx, window, (int)ray->cur.x/16, (int)ray->cur.y/16, 0x00FF0000);
 	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
 }
 
-double nearest_horizontal_hit(t_frame *map, t_ray *ray, t_rc_renderer *renderer)
+double nearest_horizontal_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *renderer*/)
 {
 	double block_size = 16.0;
-	void *window;
+	//void *window;
 
-	window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
+	//window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
 	if(ray->direction == 0.0)
 		return (2147483647);
 
@@ -558,15 +558,15 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray, t_rc_renderer *renderer)
 	ray->x_step = (block_size / fabs(tan(ray->direction))) * ray->xdir;
 	while (!hit_wall(map, ray, 'h'))
 	{
+		//mlx_pixel_put(renderer->mlx, window, (int)ray->cur.x/16, (int)ray->cur.y/16, 0x003369E8);
 		ray->cur.y += ray->y_step;
 		ray->cur.x += ray->x_step;
 	}
 	//printf("impact-h: (%f,%f)(%f,%f)\n", ray->cur.x, ray->cur.y, ray->cur.x/16.0, ray->cur.y/16.0);
-	mlx_pixel_put(renderer->mlx, window, (int)ray->cur.x/16, (int)ray->cur.y/16, 0x0000FF00);
 	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
 }
 
-double cast_ray(t_frame *map, t_vec2d position, double direction, t_rc_renderer *renderer)
+double cast_ray(t_frame *map, t_vec2d position, double direction/*, t_rc_renderer *renderer*/, int *color)
 {
 	t_ray ray;
 	double h_hit;
@@ -585,10 +585,22 @@ double cast_ray(t_frame *map, t_vec2d position, double direction, t_rc_renderer 
 
 	//exit (1);
 
-	h_hit = nearest_horizontal_hit(map, &ray, renderer);
+	h_hit = nearest_horizontal_hit(map, &ray/*, renderer*/);
 
 	ray.cur = ray.position;
-	v_hit = nearest_vertical_hit(map, &ray, renderer);
+	v_hit = nearest_vertical_hit(map, &ray/*, renderer*/);
+
+	if (h_hit < v_hit && ray.ydir == 1)
+		*color = 0x00009925;
+	else if (h_hit < v_hit)
+		*color = 0x00D50F25;
+
+	if (h_hit > v_hit && ray.xdir == 1)
+		*color = 0x00EEB211;
+	else if (h_hit > v_hit)
+		*color = 0x003369E8;
+
+
 	//printf("pos(%f,%f)(%f,%f)\n", ray.position.x, ray.position.y, ray.position.x/16.0, ray.position.y/16.0);
 	//printf("length_h: %f \tlenght_v: %f\n", h_hit / 16.0f, v_hit / 16.0f);
 	return ((h_hit < v_hit) ? h_hit / 16.0f : v_hit / 16.0f);
@@ -636,7 +648,7 @@ void	render_minimap( t_rc_renderer *renderer)
 				  0x00FF0000);
 }
 
-void draw_column(t_rc_renderer *renderer, int col_num, int length)
+void draw_column(t_rc_renderer *renderer, int col_num, int length, int color)
 {
 	int i;
 
@@ -647,7 +659,7 @@ void draw_column(t_rc_renderer *renderer, int col_num, int length)
 	i=0;
 	while (i < length)
 	{
-		draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
+		draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, color);
 		i++;
 	}
 }
@@ -677,6 +689,7 @@ void	render_player_view(t_rc_renderer *renderer)
 	int i;
 	void *window;
 	double cur_dir;
+	int color;
 
 	window = *((void **)ft_lmapget(renderer->windows, "Player View")->content);
 	//printf("%p\n", window);
@@ -691,9 +704,9 @@ void	render_player_view(t_rc_renderer *renderer)
 		while(e < renderer->scene->cur_frame->width)
 		{
 			if (z <= renderer->scene->cur_frame->height / 2)
-				draw_pixel(renderer->scene->cur_frame, e, z, 0x00FF5000);
+				draw_pixel(renderer->scene->cur_frame, e, z, 0x004286f4);
 			else
-				draw_pixel(renderer->scene->cur_frame, e, z, 0x00663300);
+				draw_pixel(renderer->scene->cur_frame, e, z, 0x0000aa30);
 			e++;
 		}
 		z++;
@@ -708,7 +721,7 @@ void	render_player_view(t_rc_renderer *renderer)
 	while (i < renderer->win_x) {
 		cur_dir -= player->fov / (double)renderer->win_x;
 		//		cast rays (player, map)
-		distance = cast_ray(renderer->scene->map, player->position, /*player->direction*/cur_dir, renderer);
+		distance = cast_ray(renderer->scene->map, player->position, /*player->direction*/cur_dir/*, renderer*/, &color);
 		//draw_player_ray(renderer, "minimap");
 		//printf("ray: %d \tangle: %f\tlenght: %f\n", i, player->direction, distance);
 		//		calculate slice height
@@ -719,7 +732,7 @@ void	render_player_view(t_rc_renderer *renderer)
 		//ft_putnbr(slice_height);
 		//ft_putchar('\n');
 		//		draw slice to frame
-		draw_column(renderer, i, (int)slice_height);
+		draw_column(renderer, i, (int)slice_height, color);
 		//graph(renderer, i, distance);
 
 		//	<< loop end
@@ -778,15 +791,21 @@ int		key_pressed(int keycode, void *param)
 	render_loop(param);
 	return (0);
 }
-
+int		exit_hook(t_rc_renderer *renderer)
+{
+	//cleanup
+	if (renderer)
+		free(renderer);
+	exit(1);
+}
 int main(int argc, char **argv)
 {
 	int			    **array2d;
 	t_rc_renderer	*rc_renderer;
 	t_vec2i         *row_col;
-	int block_size;
+	int				block_size;
 
-	block_size = 16;
+	block_size = 2;
 	if (argc != 2)
 	{
 		//usage
@@ -794,45 +813,29 @@ int main(int argc, char **argv)
 	}
 	array2d = NULL;
 	row_col = new_vec2i(0,0);
-ft_putstr("test\n");
 	//initalize ray caster
 	rc_renderer = new_rc_renderer();
 	//load map to a 2d array
 	array2d = load_map(argv[1], row_col);
-	ft_putstr("test\n");
 	//add window
 	add_rcwindow(rc_renderer, row_col->x * block_size, row_col->y * block_size, ft_strdup("minimap"));
 	add_rcwindow(rc_renderer, 1000, 1000, ft_strdup("Player View"));
-	ft_putstr("test\n");
-
 	//construct an image map that will be used for casting rays
 	rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
-
 	rc_renderer->scene->cur_frame = new_tframe(rc_renderer, rc_renderer->win_x, rc_renderer->win_y);
-
 	ft_putstr("test\n");
 	//free the memory used for the 2d array
 	del_intArr(array2d, row_col->y);
 	ft_putstr("test\n");
 	//add a player
-
-
 	rc_renderer->scene->player = new_player(23, 23, 2.355, 1.22173);
-
-
-	//draw_pixel(rc_renderer->scene->cur_frame, 50, 50, 0x00FF0000);
-
-
-	ft_putstr("test\n");
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 2, 0, key_pressed, rc_renderer);
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 2, 0, key_pressed, rc_renderer);
-	ft_putstr("test\n");
 	//mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
-	ft_putstr("test\n");
+	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 17, 0, exit_hook, rc_renderer);
+	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 17, 0, exit_hook, rc_renderer);
 	// run the mlx loop
 	mlx_loop(rc_renderer->mlx);
-
 	//clean up
-
 	return (0);
 }
