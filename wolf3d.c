@@ -533,7 +533,7 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *renderer*
 	//void *window;
 	//t_vec2d cur;
 
-	double dt, dl, db, dr;
+	double dl, dr;
 
 	//window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
 
@@ -575,7 +575,7 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *rendere
 	double block_size = 1.0;
 	//void *window;
 
-	double dt, dl, db, dr;
+	double dt, db;
 	dt = fmod(ray->cur.y, block_size);
 	db = block_size - fmod(ray->cur.y, block_size);
 
