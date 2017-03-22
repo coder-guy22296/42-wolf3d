@@ -540,30 +540,21 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *renderer*
 	//printf("first wall: (%f,%f)\n", ray->cur.x, ray->cur.y);
 	printf("fmod Y: %f\n", fmod(ray->cur.y, block_size));
 	printf("fmod X: %f\n", fmod(ray->cur.x, block_size));
-	dt = fmod(ray->cur.y, block_size);
+
 	dl = fmod(ray->cur.x, block_size);
-	db = block_size - fmod(ray->cur.y, block_size);
 	dr = block_size - fmod(ray->cur.x, block_size);
-//	dt = block_size / 2.0f;
-//	dl = block_size / 2.0f;
-//	db = block_size / 2.0f;
-//	dr = block_size / 2.0f;
 
-
-
-
+	//find first wall
 	if (ray->xdir == 1)
+	{
 		ray->cur.y += dr * fabs(tan(ray->direction))  * ray->ydir;
-	else
-		ray->cur.y += dl * fabs(tan(ray->direction))  * ray->ydir;
-	if (ray->xdir == 1)
 		ray->cur.x += dr * ray->xdir;
+	}
 	else
+	{
+		ray->cur.y += dl * fabs(tan(ray->direction))  * ray->ydir;
 		ray->cur.x += dl * ray->xdir;
-
-	//find first wall (hardcoded for a block size/resolution of 16)
-	//ray->cur.y += (block_size / 2.0f) * fabs(tan(ray->direction))  * ray->ydir;
-	//ray->cur.x += (block_size / 2.0f) * ray->xdir;
+	}
 
 	//printf("first wall-v: (%f,%f)(%f,%f) - fmod: %f\n", ray->cur.x, ray->cur.y, ray->cur.x/16.0, ray->cur.y/16.0, fmod(ray->cur.y, block_size));
 	//calculate x step and y step
@@ -586,31 +577,25 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *rendere
 
 	double dt, dl, db, dr;
 	dt = fmod(ray->cur.y, block_size);
-	dl = fmod(ray->cur.x, block_size);
 	db = block_size - fmod(ray->cur.y, block_size);
-	dr = block_size - fmod(ray->cur.x, block_size);
-//	dt = block_size / 2.0f;
-//	dl = block_size / 2.0f;
-//	db = block_size / 2.0f;
-//	dr = block_size / 2.0f;
+
 	//window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
-	if(ray->direction == 0.0)
+	if (ray->direction == 0.0)
 		return (2147483647);
 
 	printf("fmod Y: %f\n", fmod(ray->cur.y, block_size));
 	printf("fmod X: %f\n", fmod(ray->cur.x, block_size));
-	//find first wall (hardcoded for a block size/resolution of 16)
+	//find first wall
 	if (ray->ydir == -1)
+	{
 		ray->cur.y += dt * ray->ydir;
-	else
-		ray->cur.y += db * ray->ydir;
-	if (ray->ydir == -1)
 		ray->cur.x += (dt / fabs(tan(ray->direction))) * ray->xdir;
+	}
 	else
+	{
+		ray->cur.y += db * ray->ydir;
 		ray->cur.x += (db / fabs(tan(ray->direction))) * ray->xdir;
-	//find first wall (hardcoded for a block size/resolution of 16)
-	//ray->cur.y += (block_size / 2.0f) * ray->ydir;
-	//ray->cur.x += ((block_size / 2.0f) / fabs(tan(ray->direction))) * ray->xdir;
+	}
 	//printf("first wall-h: (%f,%f)(%f,%f) - fmod: %f\n", ray->cur.x, ray->cur.y, ray->cur.x/16.0, ray->cur.y/16.0, fmod(ray->cur.x, block_size));
 	//calculate x step and y step
 	ray->y_step = block_size * ray->ydir;
