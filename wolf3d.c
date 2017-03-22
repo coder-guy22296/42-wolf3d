@@ -552,14 +552,14 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *renderer*
 
 
 
-	if (ray->ydir == -1)
-		ray->cur.y += dt * fabs(tan(ray->direction))  * ray->ydir;
+	if (ray->xdir == 1)
+		ray->cur.y += dr * fabs(tan(ray->direction))  * ray->ydir;
 	else
-		ray->cur.y += db * fabs(tan(ray->direction))  * ray->ydir;
-	if (ray->xdir == -1)
-		ray->cur.x += dl * ray->xdir;
-	else
+		ray->cur.y += dl * fabs(tan(ray->direction))  * ray->ydir;
+	if (ray->xdir == 1)
 		ray->cur.x += dr * ray->xdir;
+	else
+		ray->cur.x += dl * ray->xdir;
 
 	//find first wall (hardcoded for a block size/resolution of 16)
 	//ray->cur.y += (block_size / 2.0f) * fabs(tan(ray->direction))  * ray->ydir;
@@ -604,10 +604,10 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *rendere
 		ray->cur.y += dt * ray->ydir;
 	else
 		ray->cur.y += db * ray->ydir;
-	if (ray->xdir == -1)
-		ray->cur.x += (dl / fabs(tan(ray->direction))) * ray->xdir;
+	if (ray->ydir == -1)
+		ray->cur.x += (dt / fabs(tan(ray->direction))) * ray->xdir;
 	else
-		ray->cur.x += (dr / fabs(tan(ray->direction))) * ray->xdir;
+		ray->cur.x += (db / fabs(tan(ray->direction))) * ray->xdir;
 	//find first wall (hardcoded for a block size/resolution of 16)
 	//ray->cur.y += (block_size / 2.0f) * ray->ydir;
 	//ray->cur.x += ((block_size / 2.0f) / fabs(tan(ray->direction))) * ray->xdir;
