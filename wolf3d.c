@@ -515,7 +515,7 @@ char hit_wall(t_frame *map, t_ray *ray, char dir)
 							//			check_pos.y = (int)floor((ray->cur.y));
 							//	}
 							//	printf("check_hit(%d,%d) -> %f rad *|", check_pos.x, check_pos.y, ray->direction);
-	if(get_pixel(map, check_pos.x, check_pos.y) == 0x00FFFFFF || check_pos.x > 64 || check_pos.y > 64 || check_pos.x < 0 || check_pos.y < 0)
+	if(get_pixel(map, check_pos.x, check_pos.y) == 0x00FFFFFF || check_pos.x > 1000 || check_pos.y > 1000 || check_pos.x < 0 || check_pos.y < 0)
 	{
 		//printf("hit\n");
 		return (1);
@@ -538,8 +538,8 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *renderer*
 	//window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
 
 	//printf("first wall: (%f,%f)\n", ray->cur.x, ray->cur.y);
-	printf("fmod Y: %f\n", fmod(ray->cur.y, block_size));
-	printf("fmod X: %f\n", fmod(ray->cur.x, block_size));
+	//printf("fmod Y: %f\n", fmod(ray->cur.y, block_size));
+	//printf("fmod X: %f\n", fmod(ray->cur.x, block_size));
 
 	dl = fmod(ray->cur.x, block_size);
 	dr = block_size - fmod(ray->cur.x, block_size);
@@ -566,7 +566,7 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *renderer*
 		ray->cur.y += ray->y_step;
 		ray->cur.x += ray->x_step;
 	}
-	printf("impact-v: (%f,%f)\n", ray->cur.x, ray->cur.y);
+	//printf("impact-v: (%f,%f)\n", ray->cur.x, ray->cur.y);
 	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
 }
 
@@ -583,8 +583,8 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *rendere
 	if (ray->direction == 0.0)
 		return (2147483647);
 
-	printf("fmod Y: %f\n", fmod(ray->cur.y, block_size));
-	printf("fmod X: %f\n", fmod(ray->cur.x, block_size));
+	//printf("fmod Y: %f\n", fmod(ray->cur.y, block_size));
+	//printf("fmod X: %f\n", fmod(ray->cur.x, block_size));
 	//find first wall
 	if (ray->ydir == -1)
 	{
@@ -606,7 +606,7 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray/*, t_rc_renderer *rendere
 		ray->cur.y += ray->y_step;
 		ray->cur.x += ray->x_step;
 	}
-	printf("impact-h: (%f,%f)\n", ray->cur.x, ray->cur.y);
+	//printf("impact-h: (%f,%f)\n", ray->cur.x, ray->cur.y);
 	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
 }
 
@@ -762,13 +762,13 @@ void	render_player_view(t_rc_renderer *renderer)
 	cur_dir = player->direction + (player->fov / 2.0f);
 	//
 	//	<< loop start
-	printf("=============================================================================\n");
+	//printf("=============================================================================\n");
 	while (i < renderer->win_x) {
 		cur_dir -= player->fov / (double)renderer->win_x;
 		//		cast rays (player, map)
 		distance = cast_ray(renderer->scene->map, player->position, /*player->direction*/cur_dir/*, renderer*/, &color);
 		//draw_player_ray(renderer, "minimap");
-		printf("ray: %d \tangle: %f\tlenght: %f pos(%f,%f)\n", i, cur_dir, distance, player->position.x, player->position.y);
+		//printf("ray: %d \tangle: %f\tlenght: %f pos(%f,%f)\n", i, cur_dir, distance, player->position.x, player->position.y);
 		//		calculate slice height
 		//if (cos(player->direction - cur_dir) == 0.0)
 		//	slice_height = ((double)renderer->win_y / (distance));
@@ -783,7 +783,7 @@ void	render_player_view(t_rc_renderer *renderer)
 		//	<< loop end
 		i++;
 	}
-	printf("=============================================================================\n");
+	//printf("=============================================================================\n");
 	//ft_putstr("c\n");
 	// display frame
 
@@ -817,28 +817,28 @@ int		key_pressed(int keycode, void *param)
 	renderer = (t_rc_renderer *)param;
 	if (keycode == UP)
 	{
-		renderer->scene->player->position.y -= sin(renderer->scene->player->direction) / 32.0f;
-		renderer->scene->player->position.x += cos(renderer->scene->player->direction) / 32.0f;
+		renderer->scene->player->position.y -= sin(renderer->scene->player->direction) / 4.0f;
+		renderer->scene->player->position.x += cos(renderer->scene->player->direction) / 4.0f;
 	}
 	else if (keycode == DOWN)
 	{
-		renderer->scene->player->position.y += sin(renderer->scene->player->direction) / 32.0f;
-		renderer->scene->player->position.x -= cos(renderer->scene->player->direction) / 32.0f;
+		renderer->scene->player->position.y += sin(renderer->scene->player->direction) / 4.0f;
+		renderer->scene->player->position.x -= cos(renderer->scene->player->direction) / 4.0f;
 	}
 	else if (keycode == LEFT)
 	{
-		renderer->scene->player->position.y -= sin(renderer->scene->player->direction + 1.57f) / 32.0f;
-		renderer->scene->player->position.x += cos(renderer->scene->player->direction + 1.57f) / 32.0f;
+		renderer->scene->player->position.y -= sin(renderer->scene->player->direction + 1.57f) / 4.0f;
+		renderer->scene->player->position.x += cos(renderer->scene->player->direction + 1.57f) / 4.0f;
 	}
 	else if (keycode == RIGHT)
 	{
-		renderer->scene->player->position.y += sin(renderer->scene->player->direction + 1.57f) / 32.0f;
-		renderer->scene->player->position.x -= cos(renderer->scene->player->direction + 1.57f) / 32.0f;
+		renderer->scene->player->position.y += sin(renderer->scene->player->direction + 1.57f) / 4.0f;
+		renderer->scene->player->position.x -= cos(renderer->scene->player->direction + 1.57f) / 4.0f;
 	}
 	else if (keycode == A)
-		renderer->scene->player->direction += 3.14/16;
+		renderer->scene->player->direction += 3.14f/32.0f;
 	else if (keycode == D)
-		renderer->scene->player->direction -= 3.14/16;
+		renderer->scene->player->direction -= 3.14f/32.0f;
 	else if (keycode == W)
 		renderer->scene->player->fov += 3.14f/16.0f;
 	else if (keycode == S)
@@ -880,12 +880,12 @@ int main(int argc, char **argv)
 	//construct an image map that will be used for casting rays
 	rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
 	rc_renderer->scene->cur_frame = new_tframe(rc_renderer, rc_renderer->win_x, rc_renderer->win_y);
-	ft_putstr("test\n");
+	//ft_putstr("test\n");
 	//free the memory used for the 2d array
 	del_intArr(array2d, row_col->y);
-	ft_putstr("test\n");
+	//ft_putstr("test\n");
 	//add a player
-	rc_renderer->scene->player = new_player(9, 29, 2.3561944902f, 1.22173);
+	rc_renderer->scene->player = new_player(9, 29, 2.3561944902f, 1.02548);
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 2, 0, key_pressed, rc_renderer);
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 2, 0, key_pressed, rc_renderer);
 	//mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
