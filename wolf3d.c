@@ -37,6 +37,7 @@ typedef struct	s_player
 typedef struct	s_rc_scene
 {
 	t_frame		*map;
+	t_frame		*minimap;
 	t_player	*player;
 	t_frame		*cur_frame;
 }				t_rc_scene;
@@ -281,7 +282,9 @@ t_frame *construct_map(t_rc_renderer *renderer, int **array2d, int block_size, t
 	int i;
 	int j;
 
-	//malloc frame
+	//malloc frames
+	renderer->scene->minimap = new_tframe(renderer, renderer->win_y, renderer->win_x);
+	clear_frame(renderer->scene->minimap);
 	frame = new_tframe(renderer, renderer->win_y, renderer->win_x);
 	i = 0;
 	while (i < row_col->y)
@@ -290,7 +293,11 @@ t_frame *construct_map(t_rc_renderer *renderer, int **array2d, int block_size, t
 		while (j < row_col->x)
 		{
 			if (array2d[i][j] == 1)
-				draw_square(frame, j * block_size, i * block_size, block_size);
+            {
+                draw_square(frame, j * block_size, i * block_size, block_size);
+                draw_square(renderer->scene->minimap, j * block_size * 6, i * block_size * 6, block_size * 6);
+
+            }
 			j++;
 		}
 		i++;
@@ -674,24 +681,6 @@ double cast_ray(t_frame *map, t_vec2d position, double direction/*, t_rc_rendere
 	////////////////////////////////////////////////////////////////////////////
 }
 
-void	render_minimap( t_rc_renderer *renderer)
-{
-	void *window;
-
-	window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
-
-	//exit (1);
-	//mlx_clear_window(renderer->mlx, window);
-
-	//display map image for testing purposes
-	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->map->id, 0, 0);
-
-	draw_player_ray(renderer, "minimap");
-
-	mlx_pixel_put(renderer->mlx, window, renderer->scene->player->position.x,
-				  renderer->scene->player->position.y,
-				  0x00FF0000);
-}
 
 void draw_column(t_rc_renderer *renderer, int col_num, int length, int color)
 {
@@ -737,6 +726,7 @@ void	render_player_view(t_rc_renderer *renderer)
 	int color;
 
 	window = *((void **)ft_lmapget(renderer->windows, "Player View")->content);
+	mlx_clear_window(renderer->mlx, window);
 	//printf("%p\n", window);
 	//ft_putstr("a\n");
 	//ft_putstr("b\n");
@@ -788,12 +778,33 @@ void	render_player_view(t_rc_renderer *renderer)
 	// display frame
 
 	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->cur_frame->id, 0, 0);
+	mlx_string_put(renderer->mlx, window, 0, 0, 0x33FFFFFF, "FOV:");
+	mlx_string_put(renderer->mlx, window, 40, 0, 0x33FFFFFF, ft_itoa(player->fov * (180.0f / 3.14f)));
 
 	//ft_putstr("d\n");
 	// destroy frame
 	clear_frame(renderer->scene->cur_frame);
 
 	//ft_putstr("e\n");
+}
+
+void	render_minimap( t_rc_renderer *renderer)
+{
+    void *window;
+
+    window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
+
+    //exit (1);
+    //mlx_clear_window(renderer->mlx, window);
+
+    //display map image for testing purposes
+    mlx_put_image_to_window(renderer->mlx, window, renderer->scene->minimap->id, 0, 0);
+
+    draw_player_ray(renderer, "minimap");
+
+    mlx_pixel_put(renderer->mlx, window, renderer->scene->player->position.x,
+                  renderer->scene->player->position.y,
+                  0x00FF0000);
 }
 
 int			render_loop(void *param)
@@ -875,7 +886,7 @@ int main(int argc, char **argv)
 	//load map to a 2d array
 	array2d = load_map(argv[1], row_col);
 	//add window
-	add_rcwindow(rc_renderer, row_col->x * block_size, row_col->y * block_size, ft_strdup("minimap"));
+	add_rcwindow(rc_renderer, row_col->x * block_size * 6, row_col->y * block_size * 6, ft_strdup("minimap"));
 	add_rcwindow(rc_renderer, 1000, 1000, ft_strdup("Player View"));
 	//construct an image map that will be used for casting rays
 	rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
