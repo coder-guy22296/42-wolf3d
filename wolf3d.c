@@ -26,6 +26,7 @@ typedef struct	s_vec2d
 	double  	x;
 	double		y;
 }				t_vec2d;
+
 typedef struct	s_player
 {
 	t_vec2d		position;
@@ -34,10 +35,20 @@ typedef struct	s_player
 
 }				t_player;
 
+typedef struct  s_minimap
+{
+    t_player    *player;
+    t_frame     *map;
+    t_frame     *overlay;
+    double      alpha;
+    t_vec2i     position;
+    double      scaling;
+}               t_minimap;
+
 typedef struct	s_rc_scene
 {
 	t_frame		*map;
-	t_frame		*minimap;
+	t_minimap	*minimap;
 	t_player	*player;
 	t_frame		*cur_frame;
 }				t_rc_scene;
@@ -51,6 +62,297 @@ typedef struct	s_rc_renderer
 	t_rc_scene	*scene;
 
 }				t_rc_renderer;
+
+t_frame		*new_tframe(t_rc_renderer *renderer, int height, int width)
+{
+    t_frame *frame;
+
+    if(!(frame = (t_frame *)ft_memalloc(sizeof(t_frame))))
+        return (0);
+    frame->id = mlx_new_image(renderer->mlx, width, height);
+    frame->image = mlx_get_data_addr(
+            frame->id,
+            &frame->color_depth,
+            &frame->line_size,
+            &frame->endien);
+    frame->height = height;
+    frame->width = width;
+    return (frame);
+}
+
+int draw_pixel(t_frame *frame, int x, int y, int color)
+{
+    unsigned int	*image;
+    int				pos;
+
+    image = (unsigned int *)frame->image;
+    if (x < 0 || x >= frame->width
+        || y < 0 || y >= frame->height)
+    {
+        return (1);
+    }
+    pos = x + (y * frame->line_size / 4);
+    image[pos] = (unsigned int)color;
+    return (0);
+}
+
+int get_pixel(t_frame *frame, int x, int y)
+{
+    unsigned int	*image;
+    int				pos;
+
+    image = (unsigned int *)frame->image;
+    if (x < 0 || x >= frame->width
+        || y < 0 || y >= frame->height)
+    {
+        return (1);
+    }
+    pos = x + (y * frame->line_size / 4);
+    return (image[pos]);
+}
+
+void draw_square(t_frame *frame, int x, int y, int size)
+{
+    int i;
+    int j;
+
+    i = 0;
+    while (i < size)
+    {
+        j = 0;
+        while (j < size)
+        {
+            draw_pixel(frame, x + j, y + i, 0x00FFFFFF);
+            j++;
+        }
+        i++;
+    }
+}
+
+t_frame *frame_resize(t_rc_renderer *renderer, t_frame *original, double scaling)
+{
+    t_vec2i cur;
+    t_frame *scaled_frame;
+
+    scaled_frame = new_tframe(renderer, original->height * scaling,
+                              original->width * scaling);
+    cur.y = 0;
+    while (cur.y < original->height)
+    {
+        cur.x = 0;
+        while (cur.x < original->width)
+        {
+            if (get_pixel(original, cur.x, cur.y) != 0)
+            {
+                draw_square(scaled_frame, cur.x * scaling, cur.y * scaling, scaling * 1);
+            }
+            cur.x++;
+        }
+        cur.y++;
+    }
+    return (scaled_frame);
+}
+
+void frame_clear(t_frame *frame)
+{
+    int i;
+    int j;
+
+    i = 0;
+    while (i < frame->height)
+    {
+        j = 0;
+        while (j < frame->width)
+        {
+            draw_pixel(frame, j, i, 0xFF000000);
+            j++;
+        }
+        i++;
+    }
+}
+
+int apply_alpha(int original_color, double alpha)
+{
+    int solid_color;
+    int alpha_color;
+
+    solid_color = original_color & 0x00FFFFFF;
+    printf("alpha float: %f\n", alpha);
+    printf("alpha: %d\n", (int)((1.00f - alpha) * 255));
+    alpha_color = solid_color | ((int)((1.00f - alpha) * 255)) << 24;
+
+
+    return (alpha_color);
+}
+
+void frame_apply_alpha(t_frame *frame, double alpha)
+{
+    int i;
+    int j;
+    int color;
+
+    i = 0;
+    while (i < frame->height)
+    {
+        j = 0;
+        while (j < frame->width)
+        {
+            color = get_pixel(frame, j, i);
+            draw_pixel(frame, j, i, apply_alpha(color, alpha));
+            j++;
+        }
+        i++;
+    }
+}
+
+void frame_delete(t_rc_renderer *rc_renderer, t_frame **delete_me)
+{
+
+    mlx_destroy_image(rc_renderer->mlx, (*delete_me)->image);
+    free((*delete_me)->id);
+    free(*delete_me);
+    *delete_me = NULL;
+}
+
+t_minimap *new_minimap(t_rc_renderer *renderer, t_frame *rc_map, t_vec2i pos, double scaling)
+{
+    t_minimap *minimap;
+
+    if (!(minimap = (t_minimap *)ft_memalloc(sizeof(t_minimap))))
+        return (NULL);
+    printf("rc_map height: %d\n", rc_map->height);
+    printf("rc_map width: %d\n", rc_map->width);
+    minimap->map = frame_resize(renderer, rc_map, scaling);
+    printf("map height: %d\n", minimap->map->height);
+    printf("map width: %d\n", minimap->map->width);
+    minimap->overlay = new_tframe(renderer, minimap->map->height, minimap->map->width);
+    printf("overlay height: %d\n", minimap->overlay->height);
+    printf("overlay width: %d\n", minimap->overlay->width);
+    minimap->scaling = scaling;
+    minimap->alpha = 1.0f;
+    frame_apply_alpha(minimap->map, 1.0f);
+    minimap->position = pos;
+    return (minimap);
+}
+
+void minimap_add_player(t_minimap *minimap, t_player *player)
+{
+    minimap->player = player;
+}
+
+void minimap_set_pos(t_minimap *minimap, t_vec2i pos)
+{
+    minimap->position = pos;
+}
+
+void minimap_set_alpha(t_minimap *minimap, double transparency)
+{
+    frame_apply_alpha(minimap->map, transparency);
+    minimap->alpha = transparency;
+}
+
+void minimap_change_map(t_rc_renderer *renderer, t_minimap *minimap, t_frame *rc_map, double scaling)
+{
+    frame_delete(renderer, &minimap->map);
+    frame_delete(renderer, &minimap->overlay);
+    minimap->map = frame_resize(renderer, rc_map, scaling);
+    minimap->overlay = new_tframe(renderer, minimap->map->height, minimap->map->width);
+}
+
+static void		drawray_xmajor(t_minimap *minimap, t_vec2i start, t_vec2d delta, int color)
+{
+    double	deltaerr;
+    double	error;
+    int     length = 0;
+    t_vec2i cur;
+    t_vec2i dir;
+
+    cur = start;
+    dir.x = (delta.x < 0) ? -1 : 1;
+    dir.y = (delta.y < 0) ? -1 : 1;
+    error = -1.0;
+    deltaerr = fabs(delta.x / delta.y);
+    while (1)
+    {
+        if ((get_pixel(minimap->map, cur.x, cur.y) & 0x00FFFFFF) != 0)
+            break;
+        if (cur.y == start.y)
+            error += deltaerr;
+        draw_pixel(minimap->overlay, cur.x, cur.y, color);
+        error += deltaerr;
+        if (error >= 0.0)
+        {
+            cur.x += dir.x;
+            error -= 1.0;
+        }
+        cur.y += dir.y;
+        length++;
+    }
+}
+
+static void		drawray_ymajor(t_minimap *minimap, t_vec2i start, t_vec2d delta, int color)
+{
+    double	deltaerr;
+    double	error;
+    t_vec2i cur;
+    t_vec2i dir;
+
+    cur = start;
+    dir.x = (delta.x < 0) ? -1 : 1;
+    dir.y = (delta.y < 0) ? -1 : 1;
+    error = -1.0;
+    deltaerr = fabs(delta.y / delta.x);
+    error += deltaerr;
+    while (1)
+    {
+        if ((get_pixel(minimap->map, cur.x, cur.y) & 0x00FFFFFF) != 0)
+            break;
+        draw_pixel(minimap->overlay, cur.x, cur.y, color);
+        error += deltaerr;
+        if (error >= 0.0)
+        {
+            cur.y += dir.y;
+            error -= 1.0;
+        }
+        cur.x += dir.x;
+    }
+}
+
+void minimap_draw_ray(t_minimap *minimap, t_vec2d pos, double direction, int color)
+{
+    t_vec2i start;
+    t_vec2d delta;
+
+    start.x = pos.x;
+    start.y = pos.y;
+    delta.x = cos(direction);
+    delta.y = sin(direction) * -1.0f;
+
+    if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
+        drawray_xmajor(minimap, start, delta, color);
+    else if (fabs(delta.y / delta.x) <= 1.0)
+        drawray_ymajor(minimap, start, delta, color);
+
+
+}
+
+void minimap_render(t_rc_renderer *renderer, t_minimap *minimap, char *window_name)
+{
+    void *window;
+    t_vec2d pos;
+
+    window = *((void **)ft_lmapget(renderer->windows, window_name)->content);
+    mlx_put_image_to_window(renderer->mlx, window, minimap->map->id, minimap->position.x, minimap->position.y);
+    frame_clear(minimap->overlay);
+    pos = minimap->player->position;
+    pos.x *= minimap->scaling;
+    pos.y *= minimap->scaling;
+    minimap_draw_ray(minimap, pos, minimap->player->direction, 0x000000FF);
+    draw_pixel(minimap->overlay, pos.x,
+               pos.y,
+                  0x00FF0000);
+    mlx_put_image_to_window(renderer->mlx, window, minimap->overlay->id, minimap->position.x, minimap->position.y);
+}
 
 t_rc_renderer	*new_rc_renderer()
 {
@@ -172,89 +474,8 @@ void		**new_2darray(int rows, int columns, size_t element_size)
 	return (array_2d);
 }
 
-t_frame		*new_tframe(t_rc_renderer *renderer, int height, int width)
-{
-	t_frame *frame;
 
-	if(!(frame = (t_frame *)ft_memalloc(sizeof(t_frame))))
-		return (0);
-	frame->id = mlx_new_image(renderer->mlx, width, height);
-	frame->image = mlx_get_data_addr(
-			frame->id,
-			&frame->color_depth,
-			&frame->line_size,
-			&frame->endien);
-	frame->height = height;
-	frame->width = width;
-	return (frame);
-}
 
-int draw_pixel(t_frame *frame, int x, int y, int color)
-{
-	unsigned int	*image;
-	int				pos;
-
-	image = (unsigned int *)frame->image;
-	if (x < 0 || x >= frame->width
-		|| y < 0 || y >= frame->height)
-	{
-		return (1);
-	}
-	pos = x + (y * frame->line_size / 4);
-	image[pos] = (unsigned int)color;
-	return (0);
-}
-
-int get_pixel(t_frame *frame, int x, int y)
-{
-	unsigned int	*image;
-	int				pos;
-
-	image = (unsigned int *)frame->image;
-	if (x < 0 || x >= frame->width
-		|| y < 0 || y >= frame->height)
-	{
-		return (1);
-	}
-	pos = x + (y * frame->line_size / 4);
-	return (image[pos]);
-}
-
-void draw_square(t_frame *frame, int x, int y, int size)
-{
-	int i;
-	int j;
-
-	i = 0;
-	while (i < size)
-	{
-		j = 0;
-		while (j < size)
-		{
-			draw_pixel(frame, x + j, y + i, 0x00FFFFFF);
-			j++;
-		}
-		i++;
-	}
-}
-
-void clear_frame(t_frame *frame)
-{
-	int i;
-	int j;
-
-	i = 0;
-	while (i < frame->height)
-	{
-		j = 0;
-		while (j < frame->width)
-		{
-			draw_pixel(frame, j, i, 0);
-			j++;
-		}
-		i++;
-	}
-}
 
 int **load_map(char *filename, t_vec2i *row_col)
 {
@@ -283,9 +504,9 @@ t_frame *construct_map(t_rc_renderer *renderer, int **array2d, int block_size, t
 	int j;
 
 	//malloc frames
-	renderer->scene->minimap = new_tframe(renderer, renderer->win_y, renderer->win_x);
-	clear_frame(renderer->scene->minimap);
-	frame = new_tframe(renderer, renderer->win_y, renderer->win_x);
+	//renderer->scene->minimap = new_tframe(renderer, renderer->win_y, renderer->win_x);
+	//clear_frame(renderer->scene->minimap);
+	frame = new_tframe(renderer, row_col->y * block_size, row_col->x * block_size);
 	i = 0;
 	while (i < row_col->y)
 	{
@@ -295,7 +516,7 @@ t_frame *construct_map(t_rc_renderer *renderer, int **array2d, int block_size, t
 			if (array2d[i][j] == 1)
             {
                 draw_square(frame, j * block_size, i * block_size, block_size);
-                draw_square(renderer->scene->minimap, j * block_size * 6, i * block_size * 6, block_size * 6);
+                //draw_square(renderer->scene->minimap, j * block_size * 6, i * block_size * 6, block_size * 6);
 
             }
 			j++;
@@ -319,88 +540,7 @@ t_player *new_player(int x, int y, float direction, double fov)
 }
 
 
-static void		drawray_xmajor(t_rc_renderer *renderer, char *window_name, t_vec2i start, t_vec2d delta)
-{
-	double	deltaerr;
-	double	error;
-	int     length = 0;
-	t_vec2i cur;
-	t_vec2i dir;
-	void *window;
 
-	cur = start;
-	window = *((void **)ft_lmapget(renderer->windows, window_name)->content);
-	dir.x = (delta.x < 0) ? -1 : 1;
-	dir.y = (delta.y < 0) ? -1 : 1;
-	error = -1.0;
-	deltaerr = fabs(delta.x / delta.y);
-	while (1)
-	{
-		if (get_pixel(renderer->scene->map, cur.x, cur.y) != 0)
-			break;
-		if (cur.y == start.y)
-			error += deltaerr;
-		mlx_pixel_put(renderer->mlx, window, cur.x, cur.y, 0x000000FF);
-		error += deltaerr;
-		if (error >= 0.0)
-		{
-			cur.x += dir.x;
-			error -= 1.0;
-		}
-		cur.y += dir.y;
-		length++;
-	}
-}
-
-static void		drawray_ymajor(t_rc_renderer *renderer, char *window_name, t_vec2i start, t_vec2d delta)
-{
-	double	deltaerr;
-	double	error;
-	t_vec2i cur;
-	t_vec2i dir;
-	void *window;
-
-	cur = start;
-	window = *((void **)ft_lmapget(renderer->windows, window_name)->content);
-	dir.x = (delta.x < 0) ? -1 : 1;
-	dir.y = (delta.y < 0) ? -1 : 1;
-	error = -1.0;
-	deltaerr = fabs(delta.y / delta.x);
-	error += deltaerr;
-	while (1)
-	{
-		if (get_pixel(renderer->scene->map, cur.x, cur.y) != 0)
-			break;
-		mlx_pixel_put(renderer->mlx, window, cur.x, cur.y, 0x000000FF);
-		error += deltaerr;
-		if (error >= 0.0)
-		{
-			cur.y += dir.y;
-			error -= 1.0;
-		}
-		cur.x += dir.x;
-	}
-}
-void draw_player_ray(t_rc_renderer *renderer, char *window_name)
-{
-	t_vec2i start;
-	t_player *player;
-	t_vec2d delta;
-
-
-	player = renderer->scene->player;
-	start.x = player->position.x;
-	start.y = player->position.y;
-	delta.x = cos(player->direction);
-	delta.y = sin(player->direction) * -1.0f;
-
-	if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
-		drawray_xmajor(renderer, window_name, start, delta);
-	else if (fabs(delta.y / delta.x) <= 1.0)
-		drawray_ymajor(renderer, window_name, start, delta);
-
-
-}
 
 //static double		castray_xmajor(t_frame *map, t_vec2i start, t_vec2d delta)
 //{
@@ -780,10 +920,11 @@ void	render_player_view(t_rc_renderer *renderer)
 	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->cur_frame->id, 0, 0);
 	mlx_string_put(renderer->mlx, window, 0, 0, 0x33FFFFFF, "FOV:");
 	mlx_string_put(renderer->mlx, window, 40, 0, 0x33FFFFFF, ft_itoa(player->fov * (180.0f / 3.14f)));
+    minimap_render(renderer, renderer->scene->minimap, "Player View");
 
 	//ft_putstr("d\n");
 	// destroy frame
-	clear_frame(renderer->scene->cur_frame);
+	frame_clear(renderer->scene->cur_frame);
 
 	//ft_putstr("e\n");
 }
@@ -793,18 +934,18 @@ void	render_minimap( t_rc_renderer *renderer)
     void *window;
 
     window = *((void **)ft_lmapget(renderer->windows, "minimap")->content);
-
-    //exit (1);
+    if (!window)
+        exit (1);
     //mlx_clear_window(renderer->mlx, window);
 
     //display map image for testing purposes
-    mlx_put_image_to_window(renderer->mlx, window, renderer->scene->minimap->id, 0, 0);
+    //mlx_put_image_to_window(renderer->mlx, window, renderer->scene->minimap->id, 0, 0);
 
-    draw_player_ray(renderer, "minimap");
+    //draw_player_ray(renderer, "minimap");
 
-    mlx_pixel_put(renderer->mlx, window, renderer->scene->player->position.x,
-                  renderer->scene->player->position.y,
-                  0x00FF0000);
+    //mlx_pixel_put(renderer->mlx, window, renderer->scene->player->position.x,
+    //              renderer->scene->player->position.y,
+    //              0x00FF0000);
 }
 
 int			render_loop(void *param)
@@ -891,12 +1032,20 @@ int main(int argc, char **argv)
 	//construct an image map that will be used for casting rays
 	rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
 	rc_renderer->scene->cur_frame = new_tframe(rc_renderer, rc_renderer->win_x, rc_renderer->win_y);
-	//ft_putstr("test\n");
+
+    rc_renderer->scene->minimap = new_minimap(rc_renderer, rc_renderer->scene->map, vec2i(800, 800), 6.0);
+
+    ft_putstr("test\n");
 	//free the memory used for the 2d array
 	del_intArr(array2d, row_col->y);
-	//ft_putstr("test\n");
+	ft_putstr("test\n");
 	//add a player
 	rc_renderer->scene->player = new_player(9, 29, 2.3561944902f, 1.02548);
+    ft_putstr("test\n");
+    minimap_add_player(rc_renderer->scene->minimap, rc_renderer->scene->player);
+    ft_putstr("test\n");
+    minimap_set_alpha(rc_renderer->scene->minimap, 0.8);
+    ft_putstr("test\n");
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 2, 0, key_pressed, rc_renderer);
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 2, 0, key_pressed, rc_renderer);
 	//mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
