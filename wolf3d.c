@@ -177,11 +177,7 @@ int apply_alpha(int original_color, double alpha)
 	int alpha_color;
 
 	solid_color = original_color & 0x00FFFFFF;
-	printf("alpha float: %f\n", alpha);
-	printf("alpha: %d\n", (int)((1.00f - alpha) * 255));
 	alpha_color = solid_color | ((int)((1.00f - alpha) * 255)) << 24;
-
-
 	return (alpha_color);
 }
 
@@ -373,7 +369,6 @@ void	add_rcwindow(t_rc_renderer *renderer, int width, int height, char *title)
 
 	new_window = mlx_new_window(renderer->mlx, width, height, title);
 	to_add = ft_lmapnew(title, sizeof(title), &new_window, sizeof(new_window));
-	//printf("%p\n", new_window);
 	ft_lmapadd(&renderer->windows, to_add);
 	renderer->win_x = width;
 	renderer->win_y = height;
@@ -555,17 +550,10 @@ char hit_wall(t_frame *map, t_ray *ray, char dir)
 		check_pos.y--;
 	if (dir == 'v' && ray->xdir == -1)
 		check_pos.x--;
-	//	printf("check_hit(%d,%d) -> %f rad *|", check_pos.x, check_pos.y, ray->direction);
 	if(get_pixel(map, check_pos.x, check_pos.y) == 0x00FFFFFF || check_pos.x > 1000 || check_pos.y > 1000 || check_pos.x < 0 || check_pos.y < 0)
-	{
-		//printf("hit\n");
 		return (1);
-	}
 	else
-	{
-		//printf("miss\n");
 		return (0);
-	}
 }
 
 double nearest_vertical_hit(t_frame *map, t_ray *ray)
@@ -575,9 +563,6 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray)
 
     dl = fmod(ray->cur.x, block_size);
     dr = block_size - fmod(ray->cur.x, block_size);
-	//printf("first wall: (%f,%f)\n", ray->cur.x, ray->cur.y);
-	//printf("fmod Y: %f\n", fmod(ray->cur.y, block_size));
-	//printf("fmod X: %f\n", fmod(ray->cur.x, block_size));
 
 	//find first wall
 	if (ray->xdir == 1)
@@ -590,18 +575,15 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray)
 		ray->cur.y += dl * fabs(tan(ray->direction))  * ray->ydir;
 		ray->cur.x += dl * ray->xdir;
 	}
-	//printf("first wall-v: (%f,%f) - fmod: %f\n", ray->cur.x, ray->cur.y, fmod(ray->cur.y, block_size));
 
 	//calculate x step and y step
 	ray->y_step = block_size * fabs(tan(ray->direction)) * ray->ydir;
 	ray->x_step = block_size * ray->xdir;
 	while (!hit_wall(map, ray, 'v'))
 	{
-		//mlx_pixel_put(renderer->mlx, window, (int)ray->cur.x/16, (int)ray->cur.y/16, 0x003369E8);
 		ray->cur.y += ray->y_step;
 		ray->cur.x += ray->x_step;
 	}
-	//printf("impact-v: (%f,%f)\n", ray->cur.x, ray->cur.y);
 	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
 }
 
@@ -613,8 +595,7 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray)
 	dt = fmod(ray->cur.y, block_size);
 	db = block_size - fmod(ray->cur.y, block_size);
 	if (ray->direction == 0.0)
-	//printf("fmod Y: %f\n", fmod(ray->cur.y, block_size));
-	//printf("fmod X: %f\n", fmod(ray->cur.x, block_size));
+        return (2147483647);
 
 	//find first wall
 	if (ray->ydir == -1)
@@ -627,7 +608,6 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray)
 		ray->cur.y += db * ray->ydir;
 		ray->cur.x += (db / fabs(tan(ray->direction))) * ray->xdir;
 	}
-	//printf("first wall-h: (%f,%f) - fmod: %f\n", ray->cur.x, ray->cur.y, fmod(ray->cur.x, block_size));
 	//calculate x step and y step
 	ray->y_step = block_size * ray->ydir;
 	ray->x_step = (block_size / fabs(tan(ray->direction))) * ray->xdir;
@@ -636,7 +616,6 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray)
 		ray->cur.y += ray->y_step;
 		ray->cur.x += ray->x_step;
 	}
-	//printf("impact-h: (%f,%f)\n", ray->cur.x, ray->cur.y);
 	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
 }
 
@@ -656,27 +635,18 @@ double cast_ray(t_frame *map, t_vec2d position, double direction, int *color)
 	if (cos(direction) == 0)
 		ray.xdir = 0;
 	ray.cur = ray.position;
-
-	//exit (1);
-
 	h_hit = nearest_horizontal_hit(map, &ray);
 
 	ray.cur = ray.position;
 	v_hit = nearest_vertical_hit(map, &ray);
-
 	if (h_hit < v_hit && ray.ydir == 1)
 		*color = 0x00009925;
 	else if (h_hit < v_hit)
 		*color = 0x00D50F25;
-
 	if (h_hit > v_hit && ray.xdir == 1)
 		*color = 0x00EEB211;
 	else if (h_hit > v_hit)
 		*color = 0x003369E8;
-
-	//printf("pos(%f,%f) - fmod: (%f,%f)\n", ray.position.x, ray.position.y, fmod(ray.position.x, 1.0f), fmod(ray.position.y, 1.0f));
-	//printf("fmod(opp side): (%f,%f)\n", 1.0f - fmod(ray.position.x, 1.0f), 1.0f - fmod(ray.position.y, 1.0f));
-	//printf("length_h: %f \tlenght_v: %f\n", h_hit, v_hit);
 	return ((h_hit < v_hit) ? h_hit : v_hit);
 }
 
@@ -687,8 +657,7 @@ void draw_column(t_rc_renderer *renderer, int col_num, int length, int color)
 	int y_offset;
 
 	y_offset = (renderer->win_y - length) / 2;
-
-	i=0;
+	i = 0;
 	while (i < length)
 	{
 		draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, color);
@@ -698,14 +667,13 @@ void draw_column(t_rc_renderer *renderer, int col_num, int length, int color)
 void graph(t_rc_renderer *renderer, int col_num, double length)
 {
 	int i;
-
 	int y_offset;
 
 	length *= 10;
 
 	y_offset = (renderer->win_y - length);
 
-	i=0;
+	i = 0;
 	while (i < length)
 	{
 		draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
@@ -722,14 +690,11 @@ void	render_player_view(t_rc_renderer *renderer)
 	void *window;
 	double cur_dir;
 	int color;
+    int z;
+    int e;
 
 	window = *((void **)ft_lmapget(renderer->windows, "Player View")->content);
 	mlx_clear_window(renderer->mlx, window);
-	//printf("%p\n", window);
-	//ft_putstr("a\n");
-	//ft_putstr("b\n");
-	int z;
-	int e;
 	z = 0;
 	while (z < renderer->scene->cur_frame->height)
 	{
@@ -757,16 +722,8 @@ void	render_player_view(t_rc_renderer *renderer)
 		distance = cast_ray(renderer->scene->map, player->position, cur_dir, &color);
         //		calculate slice height
         slice_height = ((double)renderer->win_y / (distance * cos(player->direction - cur_dir)));
-
-		//draw_player_ray(renderer, "minimap");
-		//printf("ray: %d \tangle: %f\tlenght: %f pos(%f,%f)\n", i, cur_dir, distance, player->position.x, player->position.y);
-		//ft_putnbr(slice_height);
-		//ft_putchar('\n');
 		//		draw slice to frame
 		draw_column(renderer, i, (int)slice_height, color);
-		//graph(renderer, i, distance);
-
-
 		i++;
 	}
     //printf("=============================================================================\n");
@@ -778,11 +735,8 @@ void	render_player_view(t_rc_renderer *renderer)
 	mlx_string_put(renderer->mlx, window, 40, 0, 0x33FFFFFF, ft_itoa(player->fov * (180.0f / 3.14f)));
 	minimap_render(renderer, renderer->scene->minimap, "Player View");
 
-	//ft_putstr("d\n");
 	// destroy frame
 	frame_clear(renderer->scene->cur_frame);
-
-	//ft_putstr("e\n");
 }
 
 void	render_minimap_window( t_rc_renderer *renderer)
@@ -796,12 +750,6 @@ void	render_minimap_window( t_rc_renderer *renderer)
 
 	//display map image for testing purposes
 	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->minimap->id, 0, 0);
-
-	//draw_player_ray(renderer, "minimap");
-
-	//mlx_pixel_put(renderer->mlx, window, renderer->scene->player->position.x,
-	//              renderer->scene->player->position.y,
-	//              0x00FF0000);
 }
 
 int			render_loop(void *param)
@@ -811,7 +759,6 @@ int			render_loop(void *param)
 	renderer = (t_rc_renderer *)param;
 	if (renderer->scene)
 	{
-
         render_minimap_window(renderer);
 		render_player_view(renderer);
 	}
@@ -888,20 +835,13 @@ int main(int argc, char **argv)
 	//construct an image map that will be used for casting rays
 	rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
 	rc_renderer->scene->cur_frame = new_tframe(rc_renderer, rc_renderer->win_x, rc_renderer->win_y);
-
 	rc_renderer->scene->minimap = new_minimap(rc_renderer, rc_renderer->scene->map, vec2i(800, 800), 6.0);
-
-	ft_putstr("test\n");
 	//free the memory used for the 2d array
 	del_intArr(array2d, row_col->y);
-	ft_putstr("test\n");
 	//add a player
 	rc_renderer->scene->player = new_player(9, 29, 2.3561944902f, 1.02548);
-	ft_putstr("test\n");
 	minimap_add_player(rc_renderer->scene->minimap, rc_renderer->scene->player);
-	ft_putstr("test\n");
 	minimap_set_alpha(rc_renderer->scene->minimap, 0.8);
-	ft_putstr("test\n");
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 2, 0, key_pressed, rc_renderer);
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 2, 0, key_pressed, rc_renderer);
 	//mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
