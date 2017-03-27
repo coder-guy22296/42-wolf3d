@@ -216,14 +216,8 @@ t_minimap *new_minimap(t_rc_renderer *renderer, t_frame *rc_map, t_vec2i pos, do
 
 	if (!(minimap = (t_minimap *)ft_memalloc(sizeof(t_minimap))))
 		return (NULL);
-	printf("rc_map height: %d\n", rc_map->height);
-	printf("rc_map width: %d\n", rc_map->width);
 	minimap->map = frame_resize(renderer, rc_map, scaling);
-	printf("map height: %d\n", minimap->map->height);
-	printf("map width: %d\n", minimap->map->width);
 	minimap->overlay = new_tframe(renderer, minimap->map->height, minimap->map->width);
-	printf("overlay height: %d\n", minimap->overlay->height);
-	printf("overlay width: %d\n", minimap->overlay->width);
 	minimap->scaling = scaling;
 	minimap->alpha = 1.0f;
 	frame_apply_alpha(minimap->map, 1.0f);
@@ -370,8 +364,11 @@ void	add_rcwindow(t_rc_renderer *renderer, int width, int height, char *title)
 	new_window = mlx_new_window(renderer->mlx, width, height, title);
 	to_add = ft_lmapnew(title, sizeof(title), &new_window, sizeof(new_window));
 	ft_lmapadd(&renderer->windows, to_add);
-	renderer->win_x = width;
-	renderer->win_y = height;
+    if (!(renderer->win_x))
+    {
+        renderer->win_x = width;
+        renderer->win_y = height;
+    }
 }
 
 void del_intArr(int **arr, int rows)
@@ -749,7 +746,7 @@ void	render_minimap_window( t_rc_renderer *renderer)
 	mlx_clear_window(renderer->mlx, window);
 
 	//display map image for testing purposes
-	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->minimap->id, 0, 0);
+	mlx_put_image_to_window(renderer->mlx, window, renderer->scene->minimap->map->id, 0, 0);
 }
 
 int			render_loop(void *param)
@@ -830,7 +827,7 @@ int main(int argc, char **argv)
 	//load map to a 2d array
 	array2d = load_map(argv[1], row_col);
 	//add window
-	add_rcwindow(rc_renderer, row_col->x * block_size * 6, row_col->y * block_size * 6, ft_strdup("minimap"));
+
 	add_rcwindow(rc_renderer, 1000, 1000, ft_strdup("Player View"));
 	//construct an image map that will be used for casting rays
 	rc_renderer->scene->map = construct_map(rc_renderer, array2d, block_size, row_col);
@@ -842,6 +839,7 @@ int main(int argc, char **argv)
 	rc_renderer->scene->player = new_player(9, 29, 2.3561944902f, 1.02548);
 	minimap_add_player(rc_renderer->scene->minimap, rc_renderer->scene->player);
 	minimap_set_alpha(rc_renderer->scene->minimap, 0.8);
+    add_rcwindow(rc_renderer, rc_renderer->scene->minimap->map->height, rc_renderer->scene->minimap->map->width, ft_strdup("minimap"));
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "minimap")->content), 2, 0, key_pressed, rc_renderer);
 	mlx_hook(*((void **)ft_lmapget(rc_renderer->windows, "Player View")->content), 2, 0, key_pressed, rc_renderer);
 	//mlx_loop_hook(rc_renderer->mlx, render_loop, rc_renderer);
