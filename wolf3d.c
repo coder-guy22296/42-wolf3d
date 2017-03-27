@@ -80,7 +80,7 @@ t_frame		*new_tframe(t_rc_renderer *renderer, int height, int width)
 	return (frame);
 }
 
-int draw_pixel(t_frame *frame, int x, int y, int color)
+int frame_draw_pixel(t_frame *frame, int x, int y, int color)
 {
 	unsigned int	*image;
 	int				pos;
@@ -96,7 +96,7 @@ int draw_pixel(t_frame *frame, int x, int y, int color)
 	return (0);
 }
 
-int get_pixel(t_frame *frame, int x, int y)
+int frame_get_pixel(t_frame *frame, int x, int y)
 {
 	unsigned int	*image;
 	int				pos;
@@ -111,7 +111,7 @@ int get_pixel(t_frame *frame, int x, int y)
 	return (image[pos]);
 }
 
-void draw_square(t_frame *frame, int x, int y, int size)
+void frame_draw_square(t_frame *frame, int x, int y, int size)
 {
 	int i;
 	int j;
@@ -122,29 +122,34 @@ void draw_square(t_frame *frame, int x, int y, int size)
 		j = 0;
 		while (j < size)
 		{
-			draw_pixel(frame, x + j, y + i, 0x00FFFFFF);
+			frame_draw_pixel(frame, x + j, y + i, 0x00FFFFFF);
 			j++;
 		}
 		i++;
 	}
 }
 
-t_frame *frame_resize(t_rc_renderer *renderer, t_frame *original, double scaling)
+t_frame *frame_resize(t_rc_renderer *renderer, t_frame *orig, double scaling)
 {
 	t_vec2i cur;
 	t_frame *scaled_frame;
+    t_vec2i size;
+    t_vec2i new_pos;
 
-	scaled_frame = new_tframe(renderer, original->height * scaling,
-							  original->width * scaling);
+    size.y = orig->height * scaling;
+    size.x = orig->width * scaling;
+	scaled_frame = new_tframe(renderer, size.y, size.x);
 	cur.y = 0;
-	while (cur.y < original->height)
+	while (cur.y < orig->height)
 	{
 		cur.x = 0;
-		while (cur.x < original->width)
+		while (cur.x < orig->width)
 		{
-			if (get_pixel(original, cur.x, cur.y) != 0)
+            new_pos.x = cur.x * scaling;
+            new_pos.y = cur.y * scaling;
+			if (frame_get_pixel(orig, cur.x, cur.y) != 0)
 			{
-				draw_square(scaled_frame, cur.x * scaling, cur.y * scaling, scaling * 1);
+				frame_draw_square(scaled_frame, new_pos.x, new_pos.y, scaling);
 			}
 			cur.x++;
 		}
@@ -164,7 +169,7 @@ void frame_clear(t_frame *frame)
 		j = 0;
 		while (j < frame->width)
 		{
-			draw_pixel(frame, j, i, 0xFF000000);
+			frame_draw_pixel(frame, j, i, 0xFF000000);
 			j++;
 		}
 		i++;
@@ -193,8 +198,8 @@ void frame_apply_alpha(t_frame *frame, double alpha)
 		j = 0;
 		while (j < frame->width)
 		{
-			color = get_pixel(frame, j, i);
-			draw_pixel(frame, j, i, apply_alpha(color, alpha));
+			color = frame_get_pixel(frame, j, i);
+			frame_draw_pixel(frame, j, i, apply_alpha(color, alpha));
 			j++;
 		}
 		i++;
@@ -264,11 +269,11 @@ static void		drawray_xmajor(t_minimap *minimap, t_vec2i start, t_vec2d delta, in
 	deltaerr = fabs(delta.x / delta.y);
 	while (1)
 	{
-		if ((get_pixel(minimap->map, cur.x, cur.y) & 0x00FFFFFF) != 0)
+		if ((frame_get_pixel(minimap->map, cur.x, cur.y) & 0x00FFFFFF) != 0)
 			break;
 		if (cur.y == start.y)
 			error += deltaerr;
-		draw_pixel(minimap->overlay, cur.x, cur.y, color);
+		frame_draw_pixel(minimap->overlay, cur.x, cur.y, color);
 		error += deltaerr;
 		if (error >= 0.0)
 		{
@@ -295,9 +300,9 @@ static void		drawray_ymajor(t_minimap *minimap, t_vec2i start, t_vec2d delta, in
 	error += deltaerr;
 	while (1)
 	{
-		if ((get_pixel(minimap->map, cur.x, cur.y) & 0x00FFFFFF) != 0)
+		if ((frame_get_pixel(minimap->map, cur.x, cur.y) & 0x00FFFFFF) != 0)
 			break;
-		draw_pixel(minimap->overlay, cur.x, cur.y, color);
+		frame_draw_pixel(minimap->overlay, cur.x, cur.y, color);
 		error += deltaerr;
 		if (error >= 0.0)
 		{
@@ -338,7 +343,7 @@ void minimap_render(t_rc_renderer *renderer, t_minimap *minimap, char *window_na
 	pos.x *= minimap->scaling;
 	pos.y *= minimap->scaling;
 	minimap_draw_ray(minimap, pos, minimap->player->direction, 0x000000FF);
-	draw_pixel(minimap->overlay, pos.x,
+	frame_draw_pixel(minimap->overlay, pos.x,
 			   pos.y,
 				  0x00FF0000);
 	mlx_put_image_to_window(renderer->mlx, window, minimap->overlay->id, minimap->position.x, minimap->position.y);
@@ -504,7 +509,7 @@ t_frame *construct_map(t_rc_renderer *renderer, int **array2d, int block_size, t
 		while (j < row_col->x)
 		{
 			if (array2d[i][j] == 1)
-				draw_square(frame, j * block_size, i * block_size, block_size);
+				frame_draw_square(frame, j * block_size, i * block_size, block_size);
 			j++;
 		}
 		i++;
@@ -547,7 +552,7 @@ char hit_wall(t_frame *map, t_ray *ray, char dir)
 		check_pos.y--;
 	if (dir == 'v' && ray->xdir == -1)
 		check_pos.x--;
-	if(get_pixel(map, check_pos.x, check_pos.y) == 0x00FFFFFF || check_pos.x > 1000 || check_pos.y > 1000 || check_pos.x < 0 || check_pos.y < 0)
+	if(frame_get_pixel(map, check_pos.x, check_pos.y) == 0x00FFFFFF || check_pos.x > 1000 || check_pos.y > 1000 || check_pos.x < 0 || check_pos.y < 0)
 		return (1);
 	else
 		return (0);
@@ -657,7 +662,7 @@ void draw_column(t_rc_renderer *renderer, int col_num, int length, int color)
 	i = 0;
 	while (i < length)
 	{
-		draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, color);
+		frame_draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, color);
 		i++;
 	}
 }
@@ -673,7 +678,7 @@ void graph(t_rc_renderer *renderer, int col_num, double length)
 	i = 0;
 	while (i < length)
 	{
-		draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
+		frame_draw_pixel(renderer->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
 		i++;
 	}
 }
@@ -699,9 +704,9 @@ void	render_player_view(t_rc_renderer *renderer)
 		while(e < renderer->scene->cur_frame->width)
 		{
 			if (z <= renderer->scene->cur_frame->height / 2)
-				draw_pixel(renderer->scene->cur_frame, e, z, 0x004286f4);
+				frame_draw_pixel(renderer->scene->cur_frame, e, z, 0x004286f4);
 			else
-				draw_pixel(renderer->scene->cur_frame, e, z, 0x0000aa30);
+				frame_draw_pixel(renderer->scene->cur_frame, e, z, 0x0000aa30);
 			e++;
 		}
 		z++;
