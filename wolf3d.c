@@ -755,13 +755,15 @@ void	render_player_view(t_rc_renderer *rend)
 
 void	render_minimap_window( t_rc_renderer *rend)
 {
-	void *window;
+	void	*window;
+	t_frame	*rc_map;
 
 	window = *((void **)ft_lmapget(rend->windows, "minimap")->content);
+	rc_map = rend->scene->minimap->map;
 	if (!window)
 		exit (1);
 	mlx_clear_window(rend->mlx, window);
-	mlx_put_image_to_window(rend->mlx, window, rend->scene->minimap->map->id, 0, 0);
+	mlx_put_image_to_window(rend->mlx, window, rc_map->id, 0, 0);
 }
 
 int			render_loop(void *param)
