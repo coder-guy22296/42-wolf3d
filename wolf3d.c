@@ -571,15 +571,25 @@ char hit_wall(t_frame *map, t_ray *ray, char dir)
 		return (0);
 }
 
+double distance(t_vec2d point_a, t_vec2d point_b)
+{
+	double a_squared;
+	double b_squared;
+
+	a_squared = pow(point_a.x - point_b.x, 2);
+	b_squared = pow(point_a.y - point_b.y, 2);
+	return ( sqrt(a_squared + b_squared) );
+}
+
 double nearest_vertical_hit(t_frame *map, t_ray *ray)
 {
-	double block_size = 1.0;
-	double dl, dr;
+	double block_size;
+	double dl;
+	double dr;
 
+	block_size = 1.0;
     dl = fmod(ray->cur.x, block_size);
     dr = block_size - fmod(ray->cur.x, block_size);
-
-	//find first wall
 	if (ray->xdir == 1)
 	{
 		ray->cur.y += dr * fabs(tan(ray->direction))  * ray->ydir;
@@ -590,8 +600,6 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray)
 		ray->cur.y += dl * fabs(tan(ray->direction))  * ray->ydir;
 		ray->cur.x += dl * ray->xdir;
 	}
-
-	//calculate x step and y step
 	ray->y_step = block_size * fabs(tan(ray->direction)) * ray->ydir;
 	ray->x_step = block_size * ray->xdir;
 	while (!hit_wall(map, ray, 'v'))
@@ -599,20 +607,18 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray)
 		ray->cur.y += ray->y_step;
 		ray->cur.x += ray->x_step;
 	}
-	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
+	return ( distance(ray->cur, ray->position) );
 }
 
 double nearest_horizontal_hit(t_frame *map, t_ray *ray)
 {
-	double block_size = 1.0;
-	double dt, db;
+	double block_size;
+	double dt;
+	double db;
 
+	block_size = 1.0;
 	dt = fmod(ray->cur.y, block_size);
 	db = block_size - fmod(ray->cur.y, block_size);
-	if (ray->direction == 0.0)
-        return (2147483647);
-
-	//find first wall
 	if (ray->ydir == -1)
 	{
 		ray->cur.y += dt * ray->ydir;
@@ -623,7 +629,6 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray)
 		ray->cur.y += db * ray->ydir;
 		ray->cur.x += (db / fabs(tan(ray->direction))) * ray->xdir;
 	}
-	//calculate x step and y step
 	ray->y_step = block_size * ray->ydir;
 	ray->x_step = (block_size / fabs(tan(ray->direction))) * ray->xdir;
 	while (!hit_wall(map, ray, 'h'))
@@ -631,15 +636,14 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray)
 		ray->cur.y += ray->y_step;
 		ray->cur.x += ray->x_step;
 	}
-	return ( sqrt(pow(ray->cur.x - ray->position.x, 2) + pow(ray->cur.y - ray->position.y, 2)));
+	return ( distance(ray->cur, ray->position) );
 }
 
-double cast_ray(t_frame *map, t_vec2d position, double direction, int *color)
+t_ray construct_ray(t_vec2d position, double direction)
 {
 	t_ray ray;
-	double h_hit;
-	double v_hit;
 
+	ft_bzero(&ray, sizeof(t_ray));
 	ray.direction = direction;
 	ray.position.x = (position.x);
 	ray.position.y = (position.y);
@@ -649,9 +653,18 @@ double cast_ray(t_frame *map, t_vec2d position, double direction, int *color)
 		ray.ydir = 0;
 	if (cos(direction) == 0)
 		ray.xdir = 0;
+	return (ray);
+}
+
+double cast_ray(t_frame *map, t_vec2d position, double direction, int *color)
+{
+	t_ray ray;
+	double h_hit;
+	double v_hit;
+
+	ray = construct_ray(position, direction);
 	ray.cur = ray.position;
 	h_hit = nearest_horizontal_hit(map, &ray);
-
 	ray.cur = ray.position;
 	v_hit = nearest_vertical_hit(map, &ray);
 	if (h_hit < v_hit && ray.ydir == 1)
@@ -668,7 +681,6 @@ double cast_ray(t_frame *map, t_vec2d position, double direction, int *color)
 void draw_column(t_rc_renderer *rend, int col_num, int length, int color)
 {
 	int i;
-
 	int y_offset;
 
 	y_offset = (rend->win_y - length) / 2;
@@ -679,15 +691,14 @@ void draw_column(t_rc_renderer *rend, int col_num, int length, int color)
 		i++;
 	}
 }
+
 void graph(t_rc_renderer *rend, int col_num, double length)
 {
 	int i;
 	int y_offset;
 
 	length *= 10;
-
 	y_offset = (rend->win_y - length);
-
 	i = 0;
 	while (i < length)
 	{
