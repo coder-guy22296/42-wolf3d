@@ -104,8 +104,7 @@ int frame_get_pixel(t_frame *frame, int x, int y)
 	int				pos;
 
 	image = (unsigned int *)frame->image;
-	if (x < 0 || x >= frame->width
-		|| y < 0 || y >= frame->height)
+	if (x < 0 || x >= frame->width || y < 0 || y >= frame->height)
 	{
 		return (1);
 	}
@@ -333,22 +332,33 @@ int color)
 		drawray_ymajor(minimap, start, delta, color);
 }
 
+/*
+** draws player direction and position on the minimap overlay, then places the
+** minimap and minimap overlay on the player window at its position specified
+** in the minimap struct
+*/
+
 void minimap_render(t_rc_renderer *rend, t_minimap *minimap, char *window_name)
 {
-	void *window;
-	t_vec2d pos;
+	void	*window;
+	t_vec2i map_pos;
+	t_vec2d player_pos;
+	double	player_dir;
 
 	window = *((void **)ft_lmapget(rend->windows, window_name)->content);
-	mlx_put_image_to_window(rend->mlx, window, minimap->map->id, minimap->position.x, minimap->position.y);
+	map_pos.x = minimap->position.x;
+	map_pos.y = minimap->position.y;
+	player_pos = minimap->player->position;
+	player_pos.x *= minimap->scaling;
+	player_pos.y *= minimap->scaling;
+	player_dir = minimap->player->direction;
 	frame_clear(minimap->overlay);
-	pos = minimap->player->position;
-	pos.x *= minimap->scaling;
-	pos.y *= minimap->scaling;
-	minimap_draw_ray(minimap, pos, minimap->player->direction, 0x000000FF);
-	frame_draw_pixel(minimap->overlay, pos.x,
-			   pos.y,
-				  0x00FF0000);
-	mlx_put_image_to_window(rend->mlx, window, minimap->overlay->id, minimap->position.x, minimap->position.y);
+	mlx_put_image_to_window(rend->mlx, window, minimap->map->id, map_pos.x,
+	map_pos.y);
+	minimap_draw_ray(minimap, player_pos, player_dir, 0x000000FF);
+	frame_draw_pixel(minimap->overlay, player_pos.x, player_pos.y, 0x00FF0000);
+	mlx_put_image_to_window(rend->mlx, window, minimap->overlay->id, map_pos.x,
+	map_pos.y);
 }
 
 t_rc_renderer	*new_rc_renderer()
@@ -357,16 +367,16 @@ t_rc_renderer	*new_rc_renderer()
 
 	if (!(rc_renderer = (t_rc_renderer *)ft_memalloc(sizeof(t_rc_renderer))))
 		return (NULL);
-	rc_renderer->mlx = mlx_init();
 	if (!(rc_renderer->scene = (t_rc_scene *)ft_memalloc(sizeof(t_rc_scene))))
-		return (0);
+		return (NULL);
+	rc_renderer->mlx = mlx_init();
 	return (rc_renderer);
 }
 
 void	add_rcwindow(t_rc_renderer *rend, int width, int height, char *title)
 {
-	t_lmap *to_add;
-	void    *new_window;
+	t_lmap	*to_add;
+	void	*new_window;
 
 	new_window = mlx_new_window(rend->mlx, width, height, title);
 	to_add = ft_lmapnew(title, sizeof(title), &new_window, sizeof(new_window));
@@ -380,7 +390,7 @@ void	add_rcwindow(t_rc_renderer *rend, int width, int height, char *title)
 
 void del_intArr(int **arr, int rows)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (i < rows)
@@ -389,7 +399,6 @@ void del_intArr(int **arr, int rows)
 		i++;
 	}
 }
-
 
 /*
 **	Load an fdf file into a linked list of arrays of strings
@@ -473,9 +482,6 @@ void		**new_2darray(int rows, int columns, size_t element_size)
 	return (array_2d);
 }
 
-
-
-
 int **load_map(char *filename, t_vec2i *row_col)
 {
 	t_list		*lines;
@@ -491,18 +497,19 @@ int **load_map(char *filename, t_vec2i *row_col)
 	(*row_col).y = load_into_list(file, &lines, &(*row_col).x);
 	array2d = (int **)new_2darray((*row_col).y, (*row_col).x, sizeof(int));
 	convert_list2array(lines, array2d, (*row_col).y, (*row_col).x);
-
 	return(array2d);
 }
 
-// hmm, where is the map then? *tsk* *tsk* *tsk*
-t_frame *construct_map(t_rc_renderer *rend, int **array2d, int block_size, t_vec2i *row_col)
+/*
+** hmm, where is the map then? *tsk* *tsk* *tsk*
+*/
+t_frame *construct_map(t_rc_renderer *rend, int **array2d, int block_size,
+t_vec2i *row_col)
 {
-	t_frame *frame;
-	int i;
-	int j;
+	t_frame	*frame;
+	int		i;
+	int		j;
 
-	//malloc frame
 	frame = new_tframe(rend, row_col->y * block_size, row_col->x * block_size);
 	i = 0;
 	while (i < row_col->y)
@@ -511,7 +518,10 @@ t_frame *construct_map(t_rc_renderer *rend, int **array2d, int block_size, t_vec
 		while (j < row_col->x)
 		{
 			if (array2d[i][j] == 1)
-				frame_draw_square(frame, j * block_size, i * block_size, block_size);
+			{
+				frame_draw_square(frame, j * block_size, i * block_size,
+				block_size);
+			}
 			j++;
 		}
 		i++;
@@ -546,15 +556,16 @@ typedef struct  s_ray
 char hit_wall(t_frame *map, t_ray *ray, char dir)
 {
 	t_vec2i check_pos;
+	int		pos_color;
 
 	check_pos.x = (int)floor(ray->cur.x);
 	check_pos.y = (int)floor(ray->cur.y);
-
 	if (dir == 'h' && ray->ydir == -1)
 		check_pos.y--;
 	if (dir == 'v' && ray->xdir == -1)
 		check_pos.x--;
-	if(frame_get_pixel(map, check_pos.x, check_pos.y) == 0x00FFFFFF || check_pos.x > 1000 || check_pos.y > 1000 || check_pos.x < 0 || check_pos.y < 0)
+	pos_color = frame_get_pixel(map, check_pos.x, check_pos.y);
+	if ( pos_color == 0x00FFFFFF || pos_color == 1)
 		return (1);
 	else
 		return (0);
