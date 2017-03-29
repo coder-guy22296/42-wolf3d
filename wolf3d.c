@@ -658,9 +658,9 @@ t_ray construct_ray(t_vec2d position, double direction)
 
 double cast_ray(t_frame *map, t_vec2d position, double direction, int *color)
 {
-	t_ray ray;
-	double h_hit;
-	double v_hit;
+	t_ray	ray;
+	double	h_hit;
+	double	v_hit;
 
 	ray = construct_ray(position, direction);
 	ray.cur = ray.position;
@@ -678,76 +678,79 @@ double cast_ray(t_frame *map, t_vec2d position, double direction, int *color)
 	return ((h_hit < v_hit) ? h_hit : v_hit);
 }
 
-void draw_column(t_rc_renderer *rend, int col_num, int length, int color)
+void draw_column(t_frame *frame, int col_num, int length, int color)
 {
 	int i;
 	int y_offset;
 
-	y_offset = (rend->win_y - length) / 2;
+	y_offset = (frame->height - length) / 2;
 	i = 0;
 	while (i < length)
 	{
-		frame_draw_pixel(rend->scene->cur_frame, col_num, i + y_offset, color);
+		frame_draw_pixel(frame, col_num, i + y_offset, color);
 		i++;
+	}
+}
+
+void draw_floor_ceiling(t_frame *frame, int floor_color, int ceil_color)
+{
+	t_vec2i cur_pixel;
+
+	cur_pixel.y = 0;
+	while (cur_pixel.y < frame->height)
+	{
+		cur_pixel.x = 0;
+		while(cur_pixel.x < frame->width)
+		{
+			if (cur_pixel.y <= frame->height / 2)
+				frame_draw_pixel(frame, cur_pixel.x, cur_pixel.y, floor_color);
+			else
+				frame_draw_pixel(frame, cur_pixel.x, cur_pixel.y, ceil_color);
+			cur_pixel.x++;
+		}
+		cur_pixel.y++;
+	}
+}
+
+void draw_walls(t_frame *frame, t_frame *rc_map, t_player *player)
+{
+	double	cur_dir;
+	int		cur_column;
+	double	distance;
+	double	column_height;
+	int		color;
+
+	cur_dir = player->direction + (player->fov / 2.0f);
+	cur_column = 0;
+	while (cur_column < frame->width)
+	{
+		cur_dir -= player->fov / (double)frame->width;
+		distance = cast_ray(rc_map, player->position, cur_dir, &color);
+		column_height = ((double)frame->height
+						/ (distance * cos(player->direction - cur_dir)));
+		draw_column(frame, cur_column, (int)column_height, color);
+		cur_column++;
 	}
 }
 
 void	render_player_view(t_rc_renderer *rend)
 {
-	t_player *player;
-	double slice_height;
-	double distance;
-	int i;
-	void *window;
-	double cur_dir;
-	int color;
-    int z;
-    int e;
+	void		*window;
+	t_frame		*cur_frame;
+	t_player	*player;
 
 	window = *((void **)ft_lmapget(rend->windows, "Player View")->content);
-	mlx_clear_window(rend->mlx, window);
-	z = 0;
-	while (z < rend->scene->cur_frame->height)
-	{
-		e = 0;
-		while(e < rend->scene->cur_frame->width)
-		{
-			if (z <= rend->scene->cur_frame->height / 2)
-				frame_draw_pixel(rend->scene->cur_frame, e, z, 0x004286f4);
-			else
-				frame_draw_pixel(rend->scene->cur_frame, e, z, 0x0000aa30);
-			e++;
-		}
-		z++;
-	}
-
-	i = 0;
+	cur_frame = rend->scene->cur_frame;
 	player = rend->scene->player;
-	cur_dir = player->direction + (player->fov / 2.0f);
-	//
-	//	<< loop start
-	//printf("=============================================================================\n");
-	while (i < rend->win_x) {
-		cur_dir -= player->fov / (double)rend->win_x;
-		//		cast rays (player, map)
-		distance = cast_ray(rend->scene->map, player->position, cur_dir, &color);
-        //		calculate slice height
-        slice_height = ((double)rend->win_y / (distance * cos(player->direction - cur_dir)));
-		//		draw slice to frame
-		draw_column(rend, i, (int)slice_height, color);
-		i++;
-	}
-    //printf("=============================================================================\n");
-    //	<< loop end
-
-	// display frame
-	mlx_put_image_to_window(rend->mlx, window, rend->scene->cur_frame->id, 0, 0);
+	mlx_clear_window(rend->mlx, window);
+	draw_floor_ceiling(cur_frame, 0x004286f4, 0x0000aa30);
+	draw_walls(cur_frame, rend->scene->map, rend->scene->player);
+	mlx_put_image_to_window(rend->mlx, window, cur_frame->id, 0, 0);
 	mlx_string_put(rend->mlx, window, 0, 0, 0x33FFFFFF, "FOV:");
-	mlx_string_put(rend->mlx, window, 40, 0, 0x33FFFFFF, ft_itoa(player->fov * (180.0f / 3.14f)));
+	mlx_string_put(rend->mlx, window, 40, 0,
+	0x33FFFFFF, ft_itoa(player->fov * (180.0f / 3.14f)));
 	minimap_render(rend, rend->scene->minimap, "Player View");
-
-	// destroy frame
-	frame_clear(rend->scene->cur_frame);
+	frame_clear(cur_frame);
 }
 
 void	render_minimap_window( t_rc_renderer *rend)
@@ -758,8 +761,6 @@ void	render_minimap_window( t_rc_renderer *rend)
 	if (!window)
 		exit (1);
 	mlx_clear_window(rend->mlx, window);
-
-	//display map image for testing purposes
 	mlx_put_image_to_window(rend->mlx, window, rend->scene->minimap->map->id, 0, 0);
 }
 
