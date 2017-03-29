@@ -65,6 +65,16 @@ typedef struct	s_rc_renderer
 
 }				t_rc_renderer;
 
+void *get_rcwindow(t_rc_renderer *rend, char *window_name)
+{
+	t_lmap	*element;
+	void	*window;
+
+	element = ft_lmapget(rend->windows, window_name);
+	window = *((void **)element->content);
+	return (window);
+}
+
 t_frame		*new_tframe(t_rc_renderer *rend, int height, int width)
 {
 	t_frame *frame;
@@ -345,7 +355,7 @@ void minimap_render(t_rc_renderer *rend, t_minimap *minimap, char *window_name)
 	t_vec2d player_pos;
 	double	player_dir;
 
-	window = *((void **)ft_lmapget(rend->windows, window_name)->content);
+	window = get_rcwindow(rend, window_name);
 	map_pos.x = minimap->position.x;
 	map_pos.y = minimap->position.y;
 	player_pos = minimap->player->position;
@@ -739,7 +749,7 @@ void	render_player_view(t_rc_renderer *rend)
 	t_frame		*cur_frame;
 	t_player	*player;
 
-	window = *((void **)ft_lmapget(rend->windows, "Player View")->content);
+	window = get_rcwindow(rend, "Player View");
 	cur_frame = rend->scene->cur_frame;
 	player = rend->scene->player;
 	mlx_clear_window(rend->mlx, window);
@@ -758,7 +768,7 @@ void	render_minimap_window( t_rc_renderer *rend)
 	void	*window;
 	t_frame	*rc_map;
 
-	window = *((void **)ft_lmapget(rend->windows, "minimap")->content);
+	window = get_rcwindow(rend, "minimap");
 	rc_map = rend->scene->minimap->map;
 	if (!window)
 		exit (1);
@@ -841,24 +851,22 @@ int		key_pressed(int keycode, void *param)
 	return (0);
 }
 
-void *get_window(t_rc_renderer *rend, char *window_name)
-{
-	t_lmap	*element;
-	void	*window;
-	
-	element = ft_lmapget(rend->windows, window_name);
-	window = *((void **)element->content);
-	return (window);
-}
-
 void hooks(t_rc_renderer *rend)
 {
-	mlx_hook(get_window(rend, "minimap"), 2, 0, key_pressed, rend);
-	mlx_hook(get_window(rend, "Player View"), 2, 0, key_pressed, rend);
+	mlx_hook(get_rcwindow(rend, "minimap"), 2, 0, key_pressed, rend);
+	mlx_hook(get_rcwindow(rend, "Player View"), 2, 0, key_pressed, rend);
 	mlx_loop_hook(rend->mlx, render_loop, rend);
-	mlx_hook(get_window(rend, "minimap"), 17, 0, exit_hook, rend);
-	mlx_hook(get_window(rend, "Player View"), 17, 0, exit_hook, rend);
+	mlx_hook(get_rcwindow(rend, "minimap"), 17, 0, exit_hook, rend);
+	mlx_hook(get_rcwindow(rend, "Player View"), 17, 0, exit_hook, rend);
 	mlx_loop(rend->mlx);
+}
+
+void setup_minimap(t_rc_renderer *rend, t_minimap **minimap)
+{
+	*minimap = new_minimap(rend, rend->scene->map, vec2i(800, 800), 6.0);
+	minimap_add_player(*minimap, rend->scene->player);
+	minimap_set_alpha(*minimap, 0.8);
+	add_rcwindow(rend, (*minimap)->height, (*minimap)->width, "minimap");
 }
 
 int main(int argc, char **argv)
@@ -878,15 +886,12 @@ int main(int argc, char **argv)
 	row_col = new_vec2i(0,0);
 	rend = new_rc_renderer();
 	array2d = load_map(argv[1], row_col);
-	add_rcwindow(rend, 1000, 1000, ft_strdup("Player View"));
+	add_rcwindow(rend, 1000, 1000, "Player View");
 	rend->scene->map = construct_map(rend, array2d, block_size, row_col);
-	rend->scene->cur_frame = new_tframe(rend, rend->win_x, rend->win_y);
-	rend->scene->minimap = new_minimap(rend, rend->scene->map, vec2i(800, 800), 6.0);
 	del_intArr(array2d, row_col->y);
 	rend->scene->player = new_player(9, 29, 2.3561944902f, 1.02548);
-	minimap_add_player(rend->scene->minimap, rend->scene->player);
-	minimap_set_alpha(rend->scene->minimap, 0.8);
-    add_rcwindow(rend, rend->scene->minimap->map->height, rend->scene->minimap->map->width, ft_strdup("minimap"));
+	rend->scene->cur_frame = new_tframe(rend, rend->win_x, rend->win_y);
+	setup_minimap(rend, &rend->scene->minimap);
 	hooks(rend);
 	return (0);
 }
