@@ -779,51 +779,88 @@ int			render_loop(void *param)
 	return (0);
 }
 
-int		key_pressed(int keycode, void *param)
+void	player_translation_controls(int keycode, t_player *player)
 {
-	t_rc_renderer	*rend;
-
-	rend = (t_rc_renderer *)param;
 	if (keycode == UP)
 	{
-		rend->scene->player->position.y -= sin(rend->scene->player->direction) / 4.0f;
-		rend->scene->player->position.x += cos(rend->scene->player->direction) / 4.0f;
+		player->position.y -= sin(player->direction) / 4.0f;
+		player->position.x += cos(player->direction) / 4.0f;
 	}
 	else if (keycode == DOWN)
 	{
-		rend->scene->player->position.y += sin(rend->scene->player->direction) / 4.0f;
-		rend->scene->player->position.x -= cos(rend->scene->player->direction) / 4.0f;
+		player->position.y += sin(player->direction) / 4.0f;
+		player->position.x -= cos(player->direction) / 4.0f;
 	}
 	else if (keycode == LEFT)
 	{
-		rend->scene->player->position.y -= sin(rend->scene->player->direction + 1.57f) / 4.0f;
-		rend->scene->player->position.x += cos(rend->scene->player->direction + 1.57f) / 4.0f;
+		player->position.y -= sin(player->direction + 1.57f) / 4.0f;
+		player->position.x += cos(player->direction + 1.57f) / 4.0f;
 	}
 	else if (keycode == RIGHT)
 	{
-		rend->scene->player->position.y += sin(rend->scene->player->direction + 1.57f) / 4.0f;
-		rend->scene->player->position.x -= cos(rend->scene->player->direction + 1.57f) / 4.0f;
+		player->position.y += sin(player->direction + 1.57f) / 4.0f;
+		player->position.x -= cos(player->direction + 1.57f) / 4.0f;
 	}
-	else if (keycode == A)
-		rend->scene->player->direction += 3.14f/32.0f;
-	else if (keycode == D)
-		rend->scene->player->direction -= 3.14f/32.0f;
-	else if (keycode == W)
-		rend->scene->player->fov += 3.14f/16.0f;
-	else if (keycode == S)
-		rend->scene->player->fov -= 3.14f/16.0f;
-	if (keycode == ESC)
-		exit(1);
-	render_loop(param);
-	return (0);
 }
+
+void player_rotation_controls(int keycode, t_player *player)
+{
+	if (keycode == A)
+		player->direction += 3.14f/32.0f;
+	else if (keycode == D)
+		player->direction -= 3.14f/32.0f;
+}
+
+void player_fov_controls(int keycode, t_player *player)
+{
+	if (keycode == W)
+		player->fov += 3.14f/16.0f;
+	else if (keycode == S)
+		player->fov -= 3.14f/16.0f;
+}
+
 int		exit_hook(t_rc_renderer *rend)
 {
-	//cleanup
 	if (rend)
 		free(rend);
 	exit(1);
 }
+
+int		key_pressed(int keycode, void *param)
+{
+	t_rc_renderer	*rend;
+	t_player		*player;
+
+	rend = (t_rc_renderer *)param;
+	player = rend->scene->player;
+	player_translation_controls(keycode, player);
+	player_rotation_controls(keycode, player);
+	player_fov_controls(keycode, player);
+	if (keycode == ESC)
+		exit_hook(rend);
+	return (0);
+}
+
+void *get_window(t_rc_renderer *rend, char *window_name)
+{
+	t_lmap	*element;
+	void	*window;
+	
+	element = ft_lmapget(rend->windows, window_name);
+	window = *((void **)element->content);
+	return (window);
+}
+
+void hooks(t_rc_renderer *rend)
+{
+	mlx_hook(get_window(rend, "minimap"), 2, 0, key_pressed, rend);
+	mlx_hook(get_window(rend, "Player View"), 2, 0, key_pressed, rend);
+	mlx_loop_hook(rend->mlx, render_loop, rend);
+	mlx_hook(get_window(rend, "minimap"), 17, 0, exit_hook, rend);
+	mlx_hook(get_window(rend, "Player View"), 17, 0, exit_hook, rend);
+	mlx_loop(rend->mlx);
+}
+
 int main(int argc, char **argv)
 {
 	int			    **array2d;
@@ -834,36 +871,22 @@ int main(int argc, char **argv)
 	block_size = 1;
 	if (argc != 2)
 	{
-		//usage
+		ft_putstr("usage: ./wolf3d <wolf file>\n");
 		return (0);
 	}
 	array2d = NULL;
 	row_col = new_vec2i(0,0);
-	//initalize ray caster
 	rend = new_rc_renderer();
-	//load map to a 2d array
 	array2d = load_map(argv[1], row_col);
-	//add window
-
 	add_rcwindow(rend, 1000, 1000, ft_strdup("Player View"));
-	//construct an image map that will be used for casting rays
 	rend->scene->map = construct_map(rend, array2d, block_size, row_col);
 	rend->scene->cur_frame = new_tframe(rend, rend->win_x, rend->win_y);
 	rend->scene->minimap = new_minimap(rend, rend->scene->map, vec2i(800, 800), 6.0);
-	//free the memory used for the 2d array
 	del_intArr(array2d, row_col->y);
-	//add a player
 	rend->scene->player = new_player(9, 29, 2.3561944902f, 1.02548);
 	minimap_add_player(rend->scene->minimap, rend->scene->player);
 	minimap_set_alpha(rend->scene->minimap, 0.8);
     add_rcwindow(rend, rend->scene->minimap->map->height, rend->scene->minimap->map->width, ft_strdup("minimap"));
-	mlx_hook(*((void **)ft_lmapget(rend->windows, "minimap")->content), 2, 0, key_pressed, rend);
-	mlx_hook(*((void **)ft_lmapget(rend->windows, "Player View")->content), 2, 0, key_pressed, rend);
-	//mlx_loop_hook(rend->mlx, render_loop, rend);
-	mlx_hook(*((void **)ft_lmapget(rend->windows, "minimap")->content), 17, 0, exit_hook, rend);
-	mlx_hook(*((void **)ft_lmapget(rend->windows, "Player View")->content), 17, 0, exit_hook, rend);
-	// run the mlx loop
-	mlx_loop(rend->mlx);
-	//clean up
+	hooks(rend);
 	return (0);
 }
