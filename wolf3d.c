@@ -692,21 +692,6 @@ void draw_column(t_rc_renderer *rend, int col_num, int length, int color)
 	}
 }
 
-void graph(t_rc_renderer *rend, int col_num, double length)
-{
-	int i;
-	int y_offset;
-
-	length *= 10;
-	y_offset = (rend->win_y - length);
-	i = 0;
-	while (i < length)
-	{
-		frame_draw_pixel(rend->scene->cur_frame, col_num, i + y_offset, 0x00FFFFFF);
-		i++;
-	}
-}
-
 void	render_player_view(t_rc_renderer *rend)
 {
 	t_player *player;
