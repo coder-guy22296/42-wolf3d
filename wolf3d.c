@@ -15,16 +15,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void	*get_rcwindow(t_rc_renderer *rend, char *window_name)
-{
-	t_lmap	*element;
-	void	*window;
-
-	element = ft_lmapget(rend->windows, window_name);
-	window = *((void **)element->content);
-	return (window);
-}
-
 t_frame		*new_tframe(t_rc_renderer *rend, int height, int width)
 {
 	t_frame	*frame;
@@ -174,51 +164,6 @@ void frame_delete(t_rc_renderer *rend, t_frame **delete_me)
 	*delete_me = NULL;
 }
 
-t_minimap *new_minimap(t_rc_renderer *rend, t_frame *rc_map, t_vec2i pos,
-double scaling)
-{
-	t_minimap *minimap;
-
-	if (!(minimap = (t_minimap *)ft_memalloc(sizeof(t_minimap))))
-		return (NULL);
-	minimap->map = frame_resize(rend, rc_map, scaling);
-	minimap->height = minimap->map->height;
-	minimap->width = minimap->map->width;
-	minimap->overlay = new_tframe(rend, minimap->height, minimap->width);
-	minimap->scaling = scaling;
-	minimap->alpha = 1.0f;
-	frame_apply_alpha(minimap->map, 1.0f);
-	minimap->position = pos;
-	return (minimap);
-}
-
-void minimap_add_player(t_minimap *minimap, t_player *player)
-{
-	minimap->player = player;
-}
-
-void minimap_set_pos(t_minimap *minimap, t_vec2i pos)
-{
-	minimap->position = pos;
-}
-
-void minimap_set_alpha(t_minimap *minimap, double transparency)
-{
-	frame_apply_alpha(minimap->map, transparency);
-	minimap->alpha = transparency;
-}
-
-void minimap_change_map(t_rc_renderer *rend, t_minimap *mini, t_frame *rc_map,
-double scaling)
-{
-	frame_delete(rend, &mini->map);
-	frame_delete(rend, &mini->overlay);
-	mini->map = frame_resize(rend, rc_map, scaling);
-	mini->height = mini->map->height;
-	mini->width = mini->map->width;
-	mini->overlay = new_tframe(rend, mini->height, mini->width);
-}
-
 static void		drawray_xmajor(t_minimap *minimap, t_vec2i start, t_vec2d delta,
 int color)
 {
@@ -310,10 +255,10 @@ void minimap_render(t_rc_renderer *rend, t_minimap *minimap, char *window_name)
 	player_pos.y *= minimap->scaling;
 	player_dir = minimap->player->direction;
 	frame_clear(minimap->overlay);
-	mlx_put_image_to_window(rend->mlx, window, minimap->map->id, map_pos.x,
-	map_pos.y);
 	minimap_draw_ray(minimap, player_pos, player_dir, 0x000000FF);
 	frame_draw_pixel(minimap->overlay, player_pos.x, player_pos.y, 0x00FF0000);
+	mlx_put_image_to_window(rend->mlx, window, minimap->map->id, map_pos.x,
+	map_pos.y);
 	mlx_put_image_to_window(rend->mlx, window, minimap->overlay->id, map_pos.x,
 	map_pos.y);
 }
@@ -328,21 +273,6 @@ t_rc_renderer	*new_rc_renderer()
 		return (NULL);
 	rc_renderer->mlx = mlx_init();
 	return (rc_renderer);
-}
-
-void	add_rcwindow(t_rc_renderer *rend, int height, int width, char *title)
-{
-	t_lmap	*to_add;
-	void	*new_window;
-
-	new_window = mlx_new_window(rend->mlx, width, height, title);
-	to_add = ft_lmapnew(title, sizeof(title), &new_window, sizeof(new_window));
-	ft_lmapadd(&rend->windows, to_add);
-	if (!(rend->win_x))
-	{
-		rend->win_x = width;
-		rend->win_y = height;
-	}
 }
 
 void del_intArr(int **arr, int rows)
@@ -714,15 +644,13 @@ void	render_player_view(t_rc_renderer *rend)
 	window = get_rcwindow(rend, "Player View");
 	cur_frame = rend->scene->cur_frame;
 	player = rend->scene->player;
-	mlx_clear_window(rend->mlx, window);
 	draw_floor_ceiling(cur_frame, 0x004286f4, 0x0000aa30);
 	draw_walls(cur_frame, rend->scene->map, rend->scene->player);
 	mlx_put_image_to_window(rend->mlx, window, cur_frame->id, 0, 0);
+	minimap_render(rend, rend->scene->minimap, "Player View");
 	mlx_string_put(rend->mlx, window, 0, 0, 0x33FFFFFF, "FOV:");
 	mlx_string_put(rend->mlx, window, 40, 0,
 	0x33FFFFFF, ft_itoa(player->fov * (180.0f / 3.14f)));
-	minimap_render(rend, rend->scene->minimap, "Player View");
-	frame_clear(cur_frame);
 }
 
 void	render_minimap_window( t_rc_renderer *rend)
@@ -734,7 +662,6 @@ void	render_minimap_window( t_rc_renderer *rend)
 	rc_map = rend->scene->minimap->map;
 	if (!window)
 		exit (1);
-	mlx_clear_window(rend->mlx, window);
 	mlx_put_image_to_window(rend->mlx, window, rc_map->id, 0, 0);
 }
 
@@ -849,6 +776,13 @@ int		key_pressed(int keycode, void *param)
 	player_fov_controls(keycode, player);
 	if (keycode == ESC)
 		exit_hook(rend);
+	render_loop(rend);
+	return (0);
+}
+
+int		expose_hook(t_rc_renderer *rend)
+{
+	render_loop(rend);
 	return (0);
 }
 
@@ -856,7 +790,8 @@ void	hooks(t_rc_renderer *rend)
 {
 	mlx_hook(get_rcwindow(rend, "minimap"), 2, 0, key_pressed, rend);
 	mlx_hook(get_rcwindow(rend, "Player View"), 2, 0, key_pressed, rend);
-	mlx_loop_hook(rend->mlx, render_loop, rend);
+	mlx_hook(get_rcwindow(rend, "minimap"), 12, 0, expose_hook, rend);
+	mlx_hook(get_rcwindow(rend, "Player View"), 12, 0, expose_hook, rend);
 	mlx_hook(get_rcwindow(rend, "minimap"), 17, 0, exit_hook, rend);
 	mlx_hook(get_rcwindow(rend, "Player View"), 17, 0, exit_hook, rend);
 	mlx_loop(rend->mlx);
@@ -866,7 +801,7 @@ void	setup_minimap(t_rc_renderer *rend, t_minimap **minimap)
 {
 	*minimap = new_minimap(rend, rend->scene->map, vec2i(800, 800), 6.0);
 	minimap_add_player(*minimap, rend->scene->player);
-	minimap_set_alpha(*minimap, 0.8);
+	minimap_set_alpha(*minimap, 1.0);
 	add_rcwindow(rend, (*minimap)->height, (*minimap)->width, "minimap");
 }
 

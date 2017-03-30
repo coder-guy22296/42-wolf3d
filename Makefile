@@ -11,7 +11,9 @@
 #******************************************************************************#
 
 NAME = wolf3d
-SRC =   wolf3d.c
+SRC =   wolf3d.c\
+        window.c\
+        minimap.c
 OFILES = $(SRC:.c=.o)
 
 LIBFT = libft/
