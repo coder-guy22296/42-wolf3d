@@ -14,6 +14,8 @@
 #include "libgraphics.h"
 #include <fcntl.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
 
 typedef struct	s_vec2f
 {
@@ -379,7 +381,7 @@ t_rc_renderer	*new_rc_renderer()
 	return (rc_renderer);
 }
 
-void	add_rcwindow(t_rc_renderer *rend, int width, int height, char *title)
+void	add_rcwindow(t_rc_renderer *rend, int height, int width, char *title)
 {
 	t_lmap	*to_add;
 	void	*new_window;
@@ -488,22 +490,48 @@ void		**new_2darray(int rows, int columns, size_t element_size)
 	return (array_2d);
 }
 
+int file_is_valid(char *filename)
+{
+	int		file;
+	char	*line;
+	char	*str;
+	char	*tmp;
+
+	if ((file = open(filename, O_RDONLY)) == -1)
+		return (0);
+	str = "\0";
+	while (get_next_line(file, &line) == 1)
+	{
+		tmp = str;
+		str = ft_strjoin(tmp, line);
+		if (tmp[0])
+			ft_strdel(&tmp);
+		ft_memdel((void **)&line);
+	}
+	close(file);
+	if (ft_strchr(str, '0') && ft_strchr(str, '1') && ft_strchr(str, ' '))
+		return (1);
+	return (0);
+}
+
 int **load_map(char *filename, t_vec2i *row_col)
 {
 	t_list	*lines;
 	int		**array2d;
 	int		file;
 
-	if ((file = open(filename, O_RDONLY)) == -1)
-	{
-		ft_putstr("bad file!\n");
-		exit(1);
-	}
 	lines = NULL;
-	(*row_col).y = load_into_list(file, &lines, &(*row_col).x);
-	array2d = (int **)new_2darray((*row_col).y, (*row_col).x, sizeof(int));
-	convert_list2array(lines, array2d, (*row_col).y, (*row_col).x);
-	return(array2d);
+	if (file_is_valid(filename))
+	{
+		file = open(filename, O_RDONLY);
+		(*row_col).y = load_into_list(file, &lines, &(*row_col).x);
+		close(file);
+		array2d = (int **)new_2darray((*row_col).y, (*row_col).x, sizeof(int));
+		convert_list2array(lines, array2d, (*row_col).y, (*row_col).x);
+		return(array2d);
+	}
+	ft_putstr("bad file!\n");
+	exit (1);
 }
 
 /*
@@ -535,7 +563,7 @@ t_vec2i *row_col)
 	return (frame);
 }
 
-t_player *new_player(int x, int y, float direction, double fov)
+t_player *new_player(double x, double y, float direction, double fov)
 {
 	t_player *player;
 
@@ -552,7 +580,7 @@ typedef struct	s_ray
 {
 	t_vec2d		position;
 	double		direction;
-	t_vec2d 	cur;
+	t_vec2d		cur;
 	int			xdir;
 	int			ydir;
 	double		x_step;
@@ -868,7 +896,7 @@ void	rc_renderer_delete(t_rc_renderer **rend)
 int		exit_hook(t_rc_renderer *rend)
 {
 	rc_renderer_delete(&rend);
-	exit(1);
+	exit (1);
 }
 
 int		key_pressed(int keycode, void *param)
@@ -925,8 +953,8 @@ int		main(int argc, char **argv)
 	rend->scene->map = construct_map(rend, array2d, block_size, row_col);
 	del_intArr(array2d, row_col->y);
 	ft_memdel((void *)&row_col);
-	rend->scene->player = new_player(9, 29, 2.3561944902f, 1.02548);
-	rend->scene->cur_frame = new_tframe(rend, rend->win_x, rend->win_y);
+	rend->scene->player = new_player(1.5, 1.5, 2.3561944902f, 1.02548);
+	rend->scene->cur_frame = new_tframe(rend, rend->win_y, rend->win_x);
 	setup_minimap(rend, &rend->scene->minimap);
 	hooks(rend);
 	exit_hook(rend);
