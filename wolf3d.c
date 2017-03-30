@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "wolf3d.h"
-#include "libgraphics.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
