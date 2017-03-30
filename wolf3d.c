@@ -14,7 +14,6 @@
 #include "libgraphics.h"
 #include <fcntl.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 typedef struct	s_vec2f
 {
@@ -219,14 +218,9 @@ void frame_apply_alpha(t_frame *frame, double alpha)
 
 void frame_delete(t_rc_renderer *rend, t_frame **delete_me)
 {
-	printf("frame image: %p\n", (*delete_me)->image);
-	printf("frame id: %p\n", (*delete_me)->id);
-	printf("wtf\n");
 	mlx_destroy_image(rend->mlx, (*delete_me)->id);
-	printf("I guess i made it part way\n");
 	free(*delete_me);
 	*delete_me = NULL;
-	printf("I guess i made it\n");
 }
 
 t_minimap *new_minimap(t_rc_renderer *rend, t_frame *rc_map, t_vec2i pos,
@@ -833,43 +827,18 @@ void	player_fov_controls(int keycode, t_player *player)
 
 void minimap_delete(t_rc_renderer *rend, t_minimap **minimap)
 {
-	printf("minimap map: %p\n", (*minimap)->map);
-	printf("minimap overlay: %p\n", (*minimap)->overlay);
 	frame_delete(rend, &(*minimap)->map);
 	frame_delete(rend, &(*minimap)->overlay);
 }
 
 void	rc_scene_delete(t_rc_renderer *rend, t_rc_scene **scene)
 {
-	printf("rc_map: %p\n", (*scene)->map);
-	printf("cur_frame: %p\n", (*scene)->cur_frame);
-	printf("minimap: %p\n", (*scene)->minimap);
-	printf("player: %p\n", (*scene)->player);
-
 	frame_delete(rend, &(*scene)->map);
 	frame_delete(rend, &(*scene)->cur_frame);
 	minimap_delete(rend, &(*scene)->minimap);
 	ft_memdel((void **)&(*scene)->player);
 	ft_memdel((void **)scene);
 }
-
-/*void	ft_lmapdelete(t_lmap **map, void (*del_key)(void *),
-**void (*del_content)(void *))
-**{
-**	t_lmap	*cur;
-**	t_lmap	*last;
-**
-**	cur = *map;
-**	while (cur)
-**	{
-**		del_content(cur->content);
-**		del_key(cur->key);
-**		last = cur;
-**		cur = cur->next;
-**		ft_memdel((void **)&last);
-**	}
-**}
-*/
 
 void	windows_delete(t_rc_renderer *rend, t_lmap **windows)
 {
@@ -879,26 +848,18 @@ void	windows_delete(t_rc_renderer *rend, t_lmap **windows)
 	cur = *windows;
 	while (cur)
 	{
-		printf("lmap key: %p\n", cur->key);
-		printf("lmap content: %p\n", cur->content);
 		ft_strdel((char **)&cur->key);
-		printf("shit broke man\n");
 		mlx_destroy_window(rend->mlx, *((void **)cur->content));
 		ft_memdel(&cur->content);
 		last = cur;
 		cur = cur->next;
-		printf("lmap node: %p\n", last);
 		ft_memdel((void **)&last);
 	}
 	*windows = NULL;
 }
 
-
-
 void	rc_renderer_delete(t_rc_renderer **rend)
 {
-	printf("scene: %p\n", (*rend)->scene);
-	printf("windows lmap: %p\n", (*rend)->windows);
 	rc_scene_delete(*rend, &(*rend)->scene);
 	windows_delete(*rend, &(*rend)->windows);
 	ft_memdel(&(*rend)->mlx);
@@ -906,7 +867,6 @@ void	rc_renderer_delete(t_rc_renderer **rend)
 
 int		exit_hook(t_rc_renderer *rend)
 {
-	printf("renderer: %p\n", rend);
 	rc_renderer_delete(&rend);
 	exit(1);
 }
