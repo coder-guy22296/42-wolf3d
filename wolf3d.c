@@ -21,9 +21,10 @@ typedef struct	s_vec2f
 	float		x;
 	float		y;
 }				t_vec2f;
+
 typedef struct	s_vec2d
 {
-	double  	x;
+	double		x;
 	double		y;
 }				t_vec2d;
 
@@ -35,17 +36,17 @@ typedef struct	s_player
 
 }				t_player;
 
-typedef struct  s_minimap
+typedef struct	s_minimap
 {
-	t_player    *player;
-	t_frame     *map;
-	t_frame     *overlay;
-	double      alpha;
-	t_vec2i     position;
+	t_player	*player;
+	t_frame		*map;
+	t_frame		*overlay;
+	double		alpha;
+	t_vec2i		position;
 	int			height;
 	int			width;
-	double      scaling;
-}               t_minimap;
+	double		scaling;
+}				t_minimap;
 
 typedef struct	s_rc_scene
 {
@@ -58,14 +59,13 @@ typedef struct	s_rc_scene
 typedef struct	s_rc_renderer
 {
 	void		*mlx;
-	t_lmap      *windows;
+	t_lmap		*windows;
 	int			win_x;
 	int			win_y;
 	t_rc_scene	*scene;
-
 }				t_rc_renderer;
 
-void *get_rcwindow(t_rc_renderer *rend, char *window_name)
+void	*get_rcwindow(t_rc_renderer *rend, char *window_name)
 {
 	t_lmap	*element;
 	void	*window;
@@ -77,22 +77,22 @@ void *get_rcwindow(t_rc_renderer *rend, char *window_name)
 
 t_frame		*new_tframe(t_rc_renderer *rend, int height, int width)
 {
-	t_frame *frame;
+	t_frame	*frame;
 
 	if(!(frame = (t_frame *)ft_memalloc(sizeof(t_frame))))
 		return (0);
 	frame->id = mlx_new_image(rend->mlx, width, height);
 	frame->image = mlx_get_data_addr(
-            frame->id,
-            &frame->color_depth,
-            &frame->line_size,
-            &frame->endien);
+			frame->id,
+			&frame->color_depth,
+			&frame->line_size,
+			&frame->endien);
 	frame->height = height;
 	frame->width = width;
 	return (frame);
 }
 
-int 	frame_draw_pixel(t_frame *frame, int x, int y, int color)
+int		frame_draw_pixel(t_frame *frame, int x, int y, int color)
 {
 	unsigned int	*image;
 	int				pos;
@@ -124,8 +124,8 @@ int frame_get_pixel(t_frame *frame, int x, int y)
 
 void frame_draw_square(t_frame *frame, int x, int y, int size)
 {
-	int i;
-	int j;
+	int	i;
+	int	j;
 
 	i = 0;
 	while (i < size)
@@ -142,13 +142,13 @@ void frame_draw_square(t_frame *frame, int x, int y, int size)
 
 t_frame *frame_resize(t_rc_renderer *rend, t_frame *orig, double scaling)
 {
-	t_vec2i cur;
-	t_frame *scaled_frame;
-    t_vec2i size;
-    t_vec2i new_pos;
+	t_vec2i	cur;
+	t_frame	*scaled_frame;
+	t_vec2i	size;
+	t_vec2i	new_pos;
 
-    size.y = orig->height * scaling;
-    size.x = orig->width * scaling;
+	size.y = orig->height * scaling;
+	size.x = orig->width * scaling;
 	scaled_frame = new_tframe(rend, size.y, size.x);
 	cur.y = 0;
 	while (cur.y < orig->height)
@@ -156,8 +156,8 @@ t_frame *frame_resize(t_rc_renderer *rend, t_frame *orig, double scaling)
 		cur.x = 0;
 		while (cur.x < orig->width)
 		{
-            new_pos.x = cur.x * scaling;
-            new_pos.y = cur.y * scaling;
+			new_pos.x = cur.x * scaling;
+			new_pos.y = cur.y * scaling;
 			if (frame_get_pixel(orig, cur.x, cur.y) != 0)
 			{
 				frame_draw_square(scaled_frame, new_pos.x, new_pos.y, scaling);
@@ -219,11 +219,14 @@ void frame_apply_alpha(t_frame *frame, double alpha)
 
 void frame_delete(t_rc_renderer *rend, t_frame **delete_me)
 {
-
-	mlx_destroy_image(rend->mlx, (*delete_me)->image);
-	free((*delete_me)->id);
+	printf("frame image: %p\n", (*delete_me)->image);
+	printf("frame id: %p\n", (*delete_me)->id);
+	printf("wtf\n");
+	mlx_destroy_image(rend->mlx, (*delete_me)->id);
+	printf("I guess i made it part way\n");
 	free(*delete_me);
 	*delete_me = NULL;
+	printf("I guess i made it\n");
 }
 
 t_minimap *new_minimap(t_rc_renderer *rend, t_frame *rc_map, t_vec2i pos,
@@ -303,8 +306,8 @@ int color)
 {
 	double	deltaerr;
 	double	error;
-	t_vec2i cur;
-	t_vec2i dir;
+	t_vec2i	cur;
+	t_vec2i	dir;
 
 	cur = start;
 	dir.x = (delta.x < 0) ? -1 : 1;
@@ -335,7 +338,6 @@ int color)
 	start.y = pos.y;
 	delta.x = cos(direction);
 	delta.y = sin(direction) * -1.0f;
-
 	if ((fabs(delta.y / delta.x) > 1.0f || delta.x == 0))
 		drawray_xmajor(minimap, start, delta, color);
 	else if (fabs(delta.y / delta.x) <= 1.0)
@@ -351,8 +353,8 @@ int color)
 void minimap_render(t_rc_renderer *rend, t_minimap *minimap, char *window_name)
 {
 	void	*window;
-	t_vec2i map_pos;
-	t_vec2d player_pos;
+	t_vec2i	map_pos;
+	t_vec2d	player_pos;
 	double	player_dir;
 
 	window = get_rcwindow(rend, window_name);
@@ -391,11 +393,11 @@ void	add_rcwindow(t_rc_renderer *rend, int width, int height, char *title)
 	new_window = mlx_new_window(rend->mlx, width, height, title);
 	to_add = ft_lmapnew(title, sizeof(title), &new_window, sizeof(new_window));
 	ft_lmapadd(&rend->windows, to_add);
-    if (!(rend->win_x))
-    {
-        rend->win_x = width;
-        rend->win_y = height;
-    }
+	if (!(rend->win_x))
+	{
+		rend->win_x = width;
+		rend->win_y = height;
+	}
 }
 
 void del_intArr(int **arr, int rows)
@@ -416,10 +418,10 @@ void del_intArr(int **arr, int rows)
 
 int			load_into_list(int fd, t_list **lines, int *max_column_cnt)
 {
-	char		*line;
-	int			line_cnt;
-	int			col_cnt;
-	char		**column_arr;
+	char	*line;
+	int		line_cnt;
+	int		col_cnt;
+	char	**column_arr;
 
 	line_cnt = 0;
 	*max_column_cnt = -99;
@@ -442,8 +444,8 @@ int			load_into_list(int fd, t_list **lines, int *max_column_cnt)
 **	Converts a linked list of arrays of strings into a 2d array of integers
 */
 
-void		convert_list2array(t_list *lines, int **arr2d,
-							   int rows, int columns)
+void	convert_list2array(t_list *lines, int **arr2d, int rows,
+int columns)
 {
 	t_list	*tmp;
 	int		valid_col;
@@ -494,9 +496,9 @@ void		**new_2darray(int rows, int columns, size_t element_size)
 
 int **load_map(char *filename, t_vec2i *row_col)
 {
-	t_list		*lines;
-	int			**array2d;
-	int			file;
+	t_list	*lines;
+	int		**array2d;
+	int		file;
 
 	if ((file = open(filename, O_RDONLY)) == -1)
 	{
@@ -552,20 +554,20 @@ t_player *new_player(int x, int y, float direction, double fov)
 	return (player);
 }
 
-typedef struct  s_ray
+typedef struct	s_ray
 {
 	t_vec2d		position;
 	double		direction;
 	t_vec2d 	cur;
-	int         xdir;
-	int         ydir;
+	int			xdir;
+	int			ydir;
 	double		x_step;
 	double		y_step;
-}               t_ray;
+}				t_ray;
 
-char hit_wall(t_frame *map, t_ray *ray, char dir)
+char	hit_wall(t_frame *map, t_ray *ray, char dir)
 {
-	t_vec2i check_pos;
+	t_vec2i	check_pos;
 	int		pos_color;
 
 	check_pos.x = (int)floor(ray->cur.x);
@@ -581,10 +583,10 @@ char hit_wall(t_frame *map, t_ray *ray, char dir)
 		return (0);
 }
 
-double distance(t_vec2d point_a, t_vec2d point_b)
+double	distance(t_vec2d point_a, t_vec2d point_b)
 {
-	double a_squared;
-	double b_squared;
+	double	a_squared;
+	double	b_squared;
 
 	a_squared = pow(point_a.x - point_b.x, 2);
 	b_squared = pow(point_a.y - point_b.y, 2);
@@ -593,13 +595,13 @@ double distance(t_vec2d point_a, t_vec2d point_b)
 
 double nearest_vertical_hit(t_frame *map, t_ray *ray)
 {
-	double block_size;
-	double dl;
-	double dr;
+	double	block_size;
+	double	dl;
+	double	dr;
 
 	block_size = 1.0;
-    dl = fmod(ray->cur.x, block_size);
-    dr = block_size - fmod(ray->cur.x, block_size);
+	dl = fmod(ray->cur.x, block_size);
+	dr = block_size - fmod(ray->cur.x, block_size);
 	if (ray->xdir == 1)
 	{
 		ray->cur.y += dr * fabs(tan(ray->direction))  * ray->ydir;
@@ -622,9 +624,9 @@ double nearest_vertical_hit(t_frame *map, t_ray *ray)
 
 double nearest_horizontal_hit(t_frame *map, t_ray *ray)
 {
-	double block_size;
-	double dt;
-	double db;
+	double	block_size;
+	double	dt;
+	double	db;
 
 	block_size = 1.0;
 	dt = fmod(ray->cur.y, block_size);
@@ -651,7 +653,7 @@ double nearest_horizontal_hit(t_frame *map, t_ray *ray)
 
 t_ray construct_ray(t_vec2d position, double direction)
 {
-	t_ray ray;
+	t_ray	ray;
 
 	ft_bzero(&ray, sizeof(t_ray));
 	ray.direction = direction;
@@ -690,8 +692,8 @@ double cast_ray(t_frame *map, t_vec2d position, double direction, int *color)
 
 void draw_column(t_frame *frame, int col_num, int length, int color)
 {
-	int i;
-	int y_offset;
+	int	i;
+	int	y_offset;
 
 	y_offset = (frame->height - length) / 2;
 	i = 0;
@@ -704,7 +706,7 @@ void draw_column(t_frame *frame, int col_num, int length, int color)
 
 void draw_floor_ceiling(t_frame *frame, int floor_color, int ceil_color)
 {
-	t_vec2i cur_pixel;
+	t_vec2i	cur_pixel;
 
 	cur_pixel.y = 0;
 	while (cur_pixel.y < frame->height)
@@ -783,7 +785,7 @@ int			render_loop(void *param)
 	rend = (t_rc_renderer *)param;
 	if (rend->scene)
 	{
-        render_minimap_window(rend);
+		render_minimap_window(rend);
 		render_player_view(rend);
 	}
 	return (0);
@@ -813,7 +815,7 @@ void	player_translation_controls(int keycode, t_player *player)
 	}
 }
 
-void player_rotation_controls(int keycode, t_player *player)
+void	player_rotation_controls(int keycode, t_player *player)
 {
 	if (keycode == A)
 		player->direction += 3.14f/32.0f;
@@ -821,7 +823,7 @@ void player_rotation_controls(int keycode, t_player *player)
 		player->direction -= 3.14f/32.0f;
 }
 
-void player_fov_controls(int keycode, t_player *player)
+void	player_fov_controls(int keycode, t_player *player)
 {
 	if (keycode == W)
 		player->fov += 3.14f/16.0f;
@@ -829,10 +831,83 @@ void player_fov_controls(int keycode, t_player *player)
 		player->fov -= 3.14f/16.0f;
 }
 
+void minimap_delete(t_rc_renderer *rend, t_minimap **minimap)
+{
+	printf("minimap map: %p\n", (*minimap)->map);
+	printf("minimap overlay: %p\n", (*minimap)->overlay);
+	frame_delete(rend, &(*minimap)->map);
+	frame_delete(rend, &(*minimap)->overlay);
+}
+
+void	rc_scene_delete(t_rc_renderer *rend, t_rc_scene **scene)
+{
+	printf("rc_map: %p\n", (*scene)->map);
+	printf("cur_frame: %p\n", (*scene)->cur_frame);
+	printf("minimap: %p\n", (*scene)->minimap);
+	printf("player: %p\n", (*scene)->player);
+
+	frame_delete(rend, &(*scene)->map);
+	frame_delete(rend, &(*scene)->cur_frame);
+	minimap_delete(rend, &(*scene)->minimap);
+	ft_memdel((void **)&(*scene)->player);
+	ft_memdel((void **)scene);
+}
+
+/*void	ft_lmapdelete(t_lmap **map, void (*del_key)(void *),
+**void (*del_content)(void *))
+**{
+**	t_lmap	*cur;
+**	t_lmap	*last;
+**
+**	cur = *map;
+**	while (cur)
+**	{
+**		del_content(cur->content);
+**		del_key(cur->key);
+**		last = cur;
+**		cur = cur->next;
+**		ft_memdel((void **)&last);
+**	}
+**}
+*/
+
+void	windows_delete(t_rc_renderer *rend, t_lmap **windows)
+{
+	t_lmap	*cur;
+	t_lmap	*last;
+
+	cur = *windows;
+	while (cur)
+	{
+		printf("lmap key: %p\n", cur->key);
+		printf("lmap content: %p\n", cur->content);
+		ft_strdel((char **)&cur->key);
+		printf("shit broke man\n");
+		mlx_destroy_window(rend->mlx, *((void **)cur->content));
+		ft_memdel(&cur->content);
+		last = cur;
+		cur = cur->next;
+		printf("lmap node: %p\n", last);
+		ft_memdel((void **)&last);
+	}
+	*windows = NULL;
+}
+
+
+
+void	rc_renderer_delete(t_rc_renderer **rend)
+{
+	printf("scene: %p\n", (*rend)->scene);
+	printf("windows lmap: %p\n", (*rend)->windows);
+	rc_scene_delete(*rend, &(*rend)->scene);
+	windows_delete(*rend, &(*rend)->windows);
+	ft_memdel(&(*rend)->mlx);
+}
+
 int		exit_hook(t_rc_renderer *rend)
 {
-	if (rend)
-		free(rend);
+	printf("renderer: %p\n", rend);
+	rc_renderer_delete(&rend);
 	exit(1);
 }
 
@@ -851,7 +926,7 @@ int		key_pressed(int keycode, void *param)
 	return (0);
 }
 
-void hooks(t_rc_renderer *rend)
+void	hooks(t_rc_renderer *rend)
 {
 	mlx_hook(get_rcwindow(rend, "minimap"), 2, 0, key_pressed, rend);
 	mlx_hook(get_rcwindow(rend, "Player View"), 2, 0, key_pressed, rend);
@@ -861,7 +936,7 @@ void hooks(t_rc_renderer *rend)
 	mlx_loop(rend->mlx);
 }
 
-void setup_minimap(t_rc_renderer *rend, t_minimap **minimap)
+void	setup_minimap(t_rc_renderer *rend, t_minimap **minimap)
 {
 	*minimap = new_minimap(rend, rend->scene->map, vec2i(800, 800), 6.0);
 	minimap_add_player(*minimap, rend->scene->player);
@@ -869,11 +944,11 @@ void setup_minimap(t_rc_renderer *rend, t_minimap **minimap)
 	add_rcwindow(rend, (*minimap)->height, (*minimap)->width, "minimap");
 }
 
-int main(int argc, char **argv)
+int		main(int argc, char **argv)
 {
-	int			    **array2d;
+	int				**array2d;
 	t_rc_renderer	*rend;
-	t_vec2i         *row_col;
+	t_vec2i			*row_col;
 	int				block_size;
 
 	block_size = 1;
@@ -889,9 +964,11 @@ int main(int argc, char **argv)
 	add_rcwindow(rend, 1000, 1000, "Player View");
 	rend->scene->map = construct_map(rend, array2d, block_size, row_col);
 	del_intArr(array2d, row_col->y);
+	ft_memdel((void *)&row_col);
 	rend->scene->player = new_player(9, 29, 2.3561944902f, 1.02548);
 	rend->scene->cur_frame = new_tframe(rend, rend->win_x, rend->win_y);
 	setup_minimap(rend, &rend->scene->minimap);
 	hooks(rend);
+	exit_hook(rend);
 	return (0);
 }
