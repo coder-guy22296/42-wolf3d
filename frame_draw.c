@@ -47,9 +47,9 @@ void	frame_draw_square(t_frame *frame, int x, int y, int size)
 
 void	frame_apply_alpha(t_frame *frame, double alpha)
 {
-	int i;
-	int j;
-	int color;
+	int	i;
+	int	j;
+	int	color;
 
 	i = 0;
 	while (i < frame->height)

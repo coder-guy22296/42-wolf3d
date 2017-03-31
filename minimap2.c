@@ -13,12 +13,12 @@
 #include "wolf3d.h"
 
 static void	drawray_xmajor(t_minimap *minimap, t_vec2i start, t_vec2d delta,
-								  int color)
+			int color)
 {
 	double	deltaerr;
 	double	error;
-	t_vec2i cur;
-	t_vec2i dir;
+	t_vec2i	cur;
+	t_vec2i	dir;
 
 	cur = start;
 	dir.x = (delta.x < 0) ? -1 : 1;
@@ -69,8 +69,8 @@ static void	drawray_ymajor(t_minimap *minimap, t_vec2i start, t_vec2d delta,
 void		minimap_draw_ray(t_minimap *minimap, t_vec2d pos, double direction,
 			int color)
 {
-	t_vec2i start;
-	t_vec2d delta;
+	t_vec2i	start;
+	t_vec2d	delta;
 
 	start.x = pos.x;
 	start.y = pos.y;
@@ -107,9 +107,9 @@ void		minimap_render(t_rc_renderer *rend, t_minimap *minimap,
 	minimap_draw_ray(minimap, player_pos, player_dir, 0x000000FF);
 	frame_draw_pixel(minimap->overlay, player_pos.x, player_pos.y, 0x00FF0000);
 	mlx_put_image_to_window(rend->mlx, window, minimap->map->id, map_pos.x,
-	map_pos.y);
+		map_pos.y);
 	mlx_put_image_to_window(rend->mlx, window, minimap->overlay->id, map_pos.x,
-	map_pos.y);
+		map_pos.y);
 }
 
 void minimap_delete(t_rc_renderer *rend, t_minimap **minimap)

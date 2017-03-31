@@ -39,10 +39,10 @@ void		frame_delete(t_rc_renderer *rend, t_frame **delete_me)
 
 t_frame		*frame_resize(t_rc_renderer *rend, t_frame *orig, double scaling)
 {
-	t_vec2i cur;
-	t_frame *scaled_frame;
-	t_vec2i size;
-	t_vec2i new_pos;
+	t_vec2i	cur;
+	t_frame	*scaled_frame;
+	t_vec2i	size;
+	t_vec2i	new_pos;
 
 	size.y = orig->height * scaling;
 	size.x = orig->width * scaling;

@@ -32,7 +32,7 @@ int		apply_alpha(int original_color, double alpha)
 	return (alpha_color);
 }
 
-void del_intArr(int **arr, int rows)
+void	del_intArr(int **arr, int rows)
 {
 	int	i;
 
