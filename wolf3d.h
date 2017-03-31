@@ -120,7 +120,7 @@ void			draw_column(t_frame *frame, int col_num, int length, int color);
 void			draw_floor_ceiling(t_frame *frame, int floor_color,
 				int ceil_color);
 void			draw_walls(t_frame *frame, t_frame *rc_map, t_player *player);
-void			render_player_view(t_rc_renderer *rend);
+void			render_player_window(t_rc_renderer *rend);
 void			render_minimap_window( t_rc_renderer *rend);
 int				render_loop(void *param);
 void			player_translation_controls(int keycode, t_player *player);
@@ -131,9 +131,8 @@ void			rc_scene_delete(t_rc_renderer *rend, t_rc_scene **scene);
 void			windows_delete(t_rc_renderer *rend, t_lmap **windows);
 void			rc_renderer_delete(t_rc_renderer **rend);
 int				exit_hook(t_rc_renderer *rend);
-int				key_pressed(int keycode, void *param);
+int				key_hook(int keycode, void *param);
 void			hooks(t_rc_renderer *rend);
 void			setup_minimap(t_rc_renderer *rend, t_minimap **minimap);
-int				main(int argc, char **argv);
 
 #endif

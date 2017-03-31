@@ -24,3 +24,21 @@ void	*get_rcwindow(t_rc_renderer *rend, char *window_name)
 	window = *((void **)element->content);
 	return (window);
 }
+
+void	windows_delete(t_rc_renderer *rend, t_lmap **windows)
+{
+	t_lmap	*cur;
+	t_lmap	*last;
+
+	cur = *windows;
+	while (cur)
+	{
+		ft_strdel((char **)&cur->key);
+		mlx_destroy_window(rend->mlx, *((void **)cur->content));
+		ft_memdel(&cur->content);
+		last = cur;
+		cur = cur->next;
+		ft_memdel((void **)&last);
+	}
+	*windows = NULL;
+}

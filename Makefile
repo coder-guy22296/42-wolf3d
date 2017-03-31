@@ -13,7 +13,17 @@
 NAME = wolf3d
 SRC =   wolf3d.c\
         window.c\
-        minimap.c
+        minimap.c\
+        minimap2.c\
+        draw_environment.c\
+        frame.c\
+        frame_draw.c\
+        hooks.c\
+        lib_misc.c\
+        load_map.c\
+        player.c\
+        rays.c\
+        rc_renderer.c
 OFILES = $(SRC:.c=.o)
 
 LIBFT = libft/
